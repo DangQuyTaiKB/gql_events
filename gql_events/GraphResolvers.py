@@ -94,3 +94,22 @@ async def resolvePresencesForEvent(session, id, invitationtypelist=[]):
 resolvePresenceTypeById = createEntityByIdGetter(PresenceTypeModel)
 resolveInvitationTypeById = createEntityByIdGetter(InvitationTypeModel)
 
+from uoishelpers.dataloaders import prepareSelect
+def create_statement_for_user_events2(id, where: dict= None):
+    if where is None:
+        statement = select(EventModel)
+    else:    
+        statement = prepareSelect(EventModel, where)
+    statement = statement.join(PresenceModel)
+    statement = statement.filter(PresenceModel.user_id == id)
+    return statement
+
+
+def create_statement_for_group_events2(id, where: dict= None):
+    if where is None:
+        statement = select(EventModel)
+    else:    
+        statement = prepareSelect(EventModel, where)
+    statement = statement.join(EventGroupModel)
+    statement = statement.filter(EventGroupModel.group_id == id)
+    return statement
