@@ -17,30 +17,10 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-
+from .uuid import UUIDColumn, UUIDFKey
 BaseModel = declarative_base()
 
-def newUuidAsString():
-    return f"{uuid.uuid1()}"
 
-
-def UUIDColumn(name=None):
-    if name is None:
-        return Column(String, primary_key=True, unique=True, default=newUuidAsString)
-    else:
-        return Column(
-            name, String, primary_key=True, unique=True, default=newUuidAsString
-        )
-
-def UUIDFKey(*, ForeignKey=None, nullable=False):
-    if ForeignKey is None:
-        return Column(
-            String, index=True, nullable=nullable
-        )
-    else:
-        return Column(
-            ForeignKey, index=True, nullable=nullable
-        )
 # id = Column(UUID(as_uuid=True), primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"),)
 
 ###########################################################################################################################
@@ -59,6 +39,7 @@ class EventModel(BaseModel):
 
     id = UUIDColumn()
     name = Column(String)
+    name_en = Column(String)
     startdate = Column(DateTime)
     enddate = Column(DateTime)
 
@@ -66,9 +47,11 @@ class EventModel(BaseModel):
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
+
     masterevent_id = Column(ForeignKey("events.id"), index=True, nullable=True)
-    eventtype_id = Column(ForeignKey("eventtypes.id"), index=True)
-    eventtype = relationship("EventTypeModel", back_populates="events")
+    type_id = Column(ForeignKey("eventtypes.id"), index=True)
+    type = relationship("EventTypeModel", back_populates="events")
 
 class EventTypeModel(BaseModel):
     __tablename__ = "eventtypes"
@@ -81,8 +64,9 @@ class EventTypeModel(BaseModel):
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
 
-    events = relationship("EventModel", back_populates="eventtype")
+    events = relationship("EventModel", back_populates="type")
 
 class EventGroupModel(BaseModel):
     __tablename__ = "events_groups"
@@ -94,6 +78,7 @@ class EventGroupModel(BaseModel):
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
 
     event = relationship("EventModel")
     #group = relationship("GroupModel")
@@ -117,6 +102,7 @@ class PresenceModel(BaseModel):
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
 
 class PresenceTypeModel(BaseModel):
     __tablename__ = "eventpresencetypes"
@@ -130,6 +116,7 @@ class PresenceTypeModel(BaseModel):
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
 
 class InvitationTypeModel(BaseModel):
     __tablename__ = "eventinvitationtypes"
@@ -143,6 +130,7 @@ class InvitationTypeModel(BaseModel):
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
 
 ##########################################################
 #
@@ -190,7 +178,7 @@ def ComposeConnectionString():
     user = os.environ.get("POSTGRES_USER", "postgres")
     password = os.environ.get("POSTGRES_PASSWORD", "example")
     database = os.environ.get("POSTGRES_DB", "data")
-    hostWithPort = os.environ.get("POSTGRES_HOST", "postgres:5432")
+    hostWithPort = os.environ.get("POSTGRES_HOST", "host.docker.internal:5432")
 
     driver = "postgresql+asyncpg"  # "postgresql+psycopg2"
     connectionstring = f"{driver}://{user}:{password}@{hostWithPort}/{database}"

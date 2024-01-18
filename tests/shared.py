@@ -54,5 +54,5 @@ from gql_events.Dataloaders import createLoaders_3
 async def createContext(asyncSessionMaker):
     return {
         "asyncSessionMaker": asyncSessionMaker,
-        "all": await createLoaders_3(asyncSessionMaker),
+        "loaders": await createLoaders_3(asyncSessionMaker),
     }
