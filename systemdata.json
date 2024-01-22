@@ -846,7 +846,7 @@
             "id": "9b642606-1551-4945-bc7d-ebb53cf513a7" , 
             "name": "2023", 
             "name_en": "2023", 
-            "eventtype_id": "e3ec17d6-6c41-4401-83f0-451f480d5940",
+            "type_id": "e3ec17d6-6c41-4401-83f0-451f480d5940",
             
             "startdate": "2023-01-01T00:00:00", 
             "enddate": "2023-12-31T23:59:59",
@@ -857,7 +857,7 @@
             "id": "45b2df80-ae0f-11ed-9bd8-0242ac110002" , 
             "name": "Zkouška", 
             "name_en": "Exam", 
-            "eventtype_id": "b87d3ff0-8fd4-11ed-a6d4-0242ac110002",
+            "type_id": "b87d3ff0-8fd4-11ed-a6d4-0242ac110002",
             
             "startdate": "2023-04-19T08:00:00", 
             "enddate": "2023-04-19T09:00:00",
@@ -867,7 +867,7 @@
             "id": "4dccf52f-4117-403c-932a-5691c0d020b1" , 
             "name": "2021/22", 
             "name_en": "2021/22", 
-            "eventtype_id": "a517c2fd-8dc7-4a2e-a107-cbdb88ba2aa5",
+            "type_id": "a517c2fd-8dc7-4a2e-a107-cbdb88ba2aa5",
             
             "startdate": "2021-09-01T00:00:00", 
             "enddate": "2022-09-01T00:00:00",
@@ -877,7 +877,7 @@
             "id": "5194663f-11aa-4775-91ed-5f3d79269fed" , 
             "name": "2022/23", 
             "name_en": "2022/23", 
-            "eventtype_id": "a517c2fd-8dc7-4a2e-a107-cbdb88ba2aa5",
+            "type_id": "a517c2fd-8dc7-4a2e-a107-cbdb88ba2aa5",
             
             "startdate": "2022-09-01T00:00:00", 
             "enddate": "2023-09-01T00:00:00",
@@ -887,7 +887,7 @@
             "id": "a64871f8-2308-48ff-adb2-33fb0b0741f1" , 
             "name": "2023/24", 
             "name_en": "2023/24", 
-            "eventtype_id": "a517c2fd-8dc7-4a2e-a107-cbdb88ba2aa5",
+            "type_id": "a517c2fd-8dc7-4a2e-a107-cbdb88ba2aa5",
             
             "startdate": "2023-09-01T00:00:00", 
             "enddate": "2024-09-01T00:00:00",
@@ -897,7 +897,7 @@
             "id": "9d05f000-7a9d-495d-9257-b597c5c6cb6a" , 
             "name": "2024/25", 
             "name_en": "2024/25", 
-            "eventtype_id": "a517c2fd-8dc7-4a2e-a107-cbdb88ba2aa5",
+            "type_id": "a517c2fd-8dc7-4a2e-a107-cbdb88ba2aa5",
             
             "startdate": "2024-09-01T00:00:00", 
             "enddate": "2025-09-01T00:00:00",
@@ -907,7 +907,7 @@
             "id": "08ff1c5d-9891-41f6-a824-fc6272adc189" , 
             "name": "2022/23 ZS", 
             "name_en": "2022/23 WS", 
-            "eventtype_id": "69ec2b0b-a39d-40df-9cea-e295b36749c9",
+            "type_id": "69ec2b0b-a39d-40df-9cea-e295b36749c9",
             "masterevent_id": "5194663f-11aa-4775-91ed-5f3d79269fed",
 
             "startdate": "2022-09-01T00:00:00", 
@@ -918,7 +918,7 @@
             "id": "0945ad17-3a36-4d33-b849-ad88144415ba" , 
             "name": "2022/23 LS", 
             "name_en": "2022/23 SS", 
-            "eventtype_id": "69ec2b0b-a39d-40df-9cea-e295b36749c9",
+            "type_id": "69ec2b0b-a39d-40df-9cea-e295b36749c9",
             "masterevent_id": "5194663f-11aa-4775-91ed-5f3d79269fed",
             
             "startdate": "2023-03-01T00:00:00", 
@@ -931,70 +931,70 @@
             "id": "89d1e684-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1e724-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f2d2-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f34a-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f3ae-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f3cc-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f412-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f430-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f46c-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f48a-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f4c6-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f4e4-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f520-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f534-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f570-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f58e-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f5ca-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f5de-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         },
         {
             "id": "89d1f624-ae0f-11ed-9bd8-0242ac110002", 
             "user_id": "89d1f638-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002", 
-            "invitation_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
+            "invitationtype_id": "e871403c-a79c-11ed-b76e-0242ac110002", 
             "presencetype_id": "466398c6-a79c-11ed-b76e-0242ac110002"
         }
     ],

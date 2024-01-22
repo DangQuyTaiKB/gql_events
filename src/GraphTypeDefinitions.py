@@ -39,7 +39,7 @@ UserGQLModel = Annotated["UserGQLModel", strawberry.lazy(".GraphTypeDefinitionsE
 class PresenceGQLModel:
     @classmethod
     def getLoader(cls, info: strawberry.types.Info):
-        return getLoadersFromInfo(info).presences
+        return getLoadersFromInfo(info).events_users
 
     resolve_reference = resolve_reference
 
@@ -56,13 +56,13 @@ class PresenceGQLModel:
 
     @strawberry.field(description="""Invited, Accepted, etc.""")
     async def invitation_type(self, info: strawberry.types.Info) -> Optional['InvitationTypeGQLModel']:
-        result = await InvitationTypeGQLModel.resolve_reference(info, self.invitation_id)
+        result = await InvitationTypeGQLModel.resolve_reference(info, self.invitationtype_id)
         return result
 
     @strawberry.field(description="""The user / participant""")
-    async def user(self) -> Optional['UserGQLModel']:
+    async def user(self, info: strawberry.types.Info) -> Optional['UserGQLModel']:
         from .GraphTypeDefinitionsExt import UserGQLModel
-        result = await UserGQLModel(id=self.user_id)
+        result = await UserGQLModel.resolve_reference(info, id=self.user_id)
         return result
 
     @strawberry.field(description="""The event""")
@@ -103,7 +103,7 @@ class PresenceTypeGQLModel:
 
     @classmethod
     def getLoader(cls, info: strawberry.types.Info):
-        return getLoadersFromInfo(info).presencetypes
+        return getLoadersFromInfo(info).eventpresencetypes
 
     resolve_reference = resolve_reference
 
@@ -124,7 +124,7 @@ class InvitationTypeGQLModel:
 
     @classmethod
     def getLoader(cls, info: strawberry.types.Info):
-        return getLoadersFromInfo(info).presencetypes
+        return getLoadersFromInfo(info).eventinvitationtypes
 
     resolve_reference = resolve_reference
 
@@ -196,7 +196,7 @@ class EventGQLModel:
 
     @strawberry.field(description="""Type of the event""")
     async def event_type(self, info: strawberry.types.Info) -> Optional["EventTypeGQLModel"]:
-        result = await EventTypeGQLModel.resolve_reference(info=info, id=self.eventtype_id)
+        result = await EventTypeGQLModel.resolve_reference(info=info, id=self.type_id)
         return result
 
     @strawberry.field(description="""event which contains this event (aka semester of this lesson)""")
@@ -237,7 +237,7 @@ class EventTypeInputFilter:
     )
 @asPage
 async def event_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[EventTypeInputFilter] = None) -> List["EventTypeGQLModel"]:
-    return getLoadersFromInfo(info).eventtypes
+    return EventTypeGQLModel.getLoader(info)
 
 @strawberry.field(
     description="""Gets type of event by id""",
@@ -260,7 +260,7 @@ class PresenceTypeInputFilter:
     )
 @asPage
 async def presence_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[PresenceTypeInputFilter] = None) -> List["PresenceTypeGQLModel"]:
-    return getLoadersFromInfo(info).presencetypes
+    return PresenceTypeGQLModel.getLoader(info)
 
 @strawberry.field(
     description="""Gets type of presence by id""",
@@ -284,7 +284,7 @@ class InvitationTypeInputFilter:
     )
 @asPage
 async def invitation_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[InvitationTypeInputFilter] = None) -> List["InvitationTypeGQLModel"]:
-    return getLoadersFromInfo(info).invitationtypes
+    return InvitationTypeGQLModel.getLoader(info)
 
 @strawberry.field(
     description="""Gets type of invitation by id""",
@@ -311,7 +311,7 @@ class EventInputFilter:
     )
 @asPage
 async def event_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[EventInputFilter] = None) -> List["EventGQLModel"]:
-    return getLoadersFromInfo(info).events
+    return EventGQLModel.getLoader(info)
 
 @strawberry.field(
     description="""Gets event by id""",
@@ -328,10 +328,18 @@ class PresenceInputFilter:
     name: str
     name_en: str
 
+@strawberry.field(
+    description="""Finds all events paged""",
+    #permission_classes=[OnlyForAuthentized(isList=True)]
+    )
 @asPage
 async def presence_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[PresenceInputFilter] = None) -> List["PresenceGQLModel"]:
-    return getLoadersFromInfo(info).events
+    return PresenceGQLModel.getLoader(info)
 
+@strawberry.field(
+    description="""Finds all events paged""",
+    #permission_classes=[OnlyForAuthentized(isList=True)]
+    )
 async def presence_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["PresenceGQLModel"]:
     return await PresenceGQLModel.resolve_reference(info=info, id=id)
 
@@ -349,14 +357,20 @@ class Query:
     event_by_id = event_by_id
     event_page = event_page
 
+    event_presence_page = presence_page
+    event_presence_by_id = presence_by_id
+
     event_type_by_id = event_type_by_id
     event_type_page = event_type_page
 
     event_presence_type_by_id = presence_type_by_id
     event_presence_type_page = presence_type_page
 
+
     event_invitation_type_by_id = invitation_type_by_id
     event_invitation_type_page = invitation_type_page
+
+
 # endregion
 
 ###########################################################################################################################
@@ -395,7 +409,7 @@ class EventResultGQLModel:
     msg: str = None
 
     @strawberry.field(description="""Result of user operation""")
-    async def event(self, info: strawberry.types.Info) -> Union[EventGQLModel, None]:
+    async def event(self, info: strawberry.types.Info) -> Optional[EventGQLModel]:
         result = await EventGQLModel.resolve_reference(info, self.id)
         return result
 
@@ -418,7 +432,7 @@ async def event_update(self, info: strawberry.types.Info, event: EventUpdateGQLM
 class PresenceInsertGQLModel:
     user_id: IDType
     event_id: IDType
-    invitation_id: IDType
+    invitationtype_id: IDType
     presencetype_id: Optional[IDType] = None
     id: Optional[IDType] = None
 
@@ -426,7 +440,7 @@ class PresenceInsertGQLModel:
 class PresenceUpdateGQLModel:
     id: IDType
     lastchange: datetime.datetime
-    invitation_id: Optional[IDType] = None
+    invitationtype_id: Optional[IDType] = None
     presencetype_id: Optional[IDType] = None
     
 @strawberry.type(description="""Result of user operation""")
@@ -441,11 +455,11 @@ class PresenceResultGQLModel:
 
 @strawberry.mutation(description="creates new presence")
 async def presence_insert(self, info: strawberry.types.Info, presence: PresenceInsertGQLModel) -> PresenceResultGQLModel:
-    return await encapsulateInsert(info, getLoadersFromInfo(info).presences, presence, PresenceResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, PresenceGQLModel.getLoader(info), presence, PresenceResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def presence_update(self, info: strawberry.types.Info, presence: PresenceUpdateGQLModel) -> PresenceResultGQLModel:
-    return await encapsulateUpdate(info, getLoadersFromInfo(info).presences, presence, PresenceResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, PresenceGQLModel.getLoader(info), presence, PresenceResultGQLModel(id=None, msg="ok"))
 
 # endregion
 
@@ -474,11 +488,11 @@ class EventTypeResultGQLModel:
     
 @strawberry.mutation(description="creates new presence")
 async def event_type_insert(self, info: strawberry.types.Info, event_type: EventTypeInsertGQLModel) -> EventTypeResultGQLModel:
-    return await encapsulateInsert(info, getLoadersFromInfo(info).presences, event_type, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, PresenceGQLModel.getLoader(info), event_type, EventTypeResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def event_type_update(self, info: strawberry.types.Info, event_type: EventTypeUpdateGQLModel) -> EventTypeResultGQLModel:
-    return await encapsulateUpdate(info, getLoadersFromInfo(info).presences, event_type, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, PresenceGQLModel.getLoader(info), event_type, EventTypeResultGQLModel(id=None, msg="ok"))
 
 # endregion
 
@@ -507,11 +521,11 @@ class PresenceTypeResultGQLModel:
     
 @strawberry.mutation(description="creates new presence type")
 async def presence_type_insert(self, info: strawberry.types.Info, presence_type: PresenceTypeInsertGQLModel) -> PresenceTypeResultGQLModel:
-    return await encapsulateInsert(info, getLoadersFromInfo(info).presencetypes, presence_type, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, PresenceTypeGQLModel.getLoader(info), presence_type, EventTypeResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def presence_type_update(self, info: strawberry.types.Info, presence_type: PresenceTypeUpdateGQLModel) -> PresenceTypeResultGQLModel:
-    return await encapsulateUpdate(info, getLoadersFromInfo(info).presencetypes, presence_type, PresenceTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, PresenceTypeGQLModel.getLoader(info), presence_type, PresenceTypeResultGQLModel(id=None, msg="ok"))
 
 # endregion
 
@@ -535,20 +549,107 @@ class InvitationTypeResultGQLModel:
 
     @strawberry.field(description="""Presence type""")
     async def invitation_type(self, info: strawberry.types.Info) -> Optional[InvitationTypeGQLModel]:
-        result = await PresenceTypeGQLModel.resolve_reference(info, self.id)
+        result = await InvitationTypeGQLModel.resolve_reference(info, self.id)
         return result
     
 @strawberry.mutation(description="creates new presence type")
 async def invitation_type_insert(self, info: strawberry.types.Info, invitation_type: InvitationTypeInsertGQLModel) -> InvitationTypeResultGQLModel:
-    return await encapsulateInsert(info, getLoadersFromInfo(info).presencetypes, invitation_type, InvitationTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, InvitationTypeGQLModel.getLoader(info), invitation_type, InvitationTypeResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def invitation_type_update(self, info: strawberry.types.Info, invitation_type: InvitationTypeUpdateGQLModel) -> InvitationTypeResultGQLModel:
-    return await encapsulateUpdate(info, getLoadersFromInfo(info).presencetypes, invitation_type, InvitationTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, InvitationTypeGQLModel.getLoader(info), invitation_type, InvitationTypeResultGQLModel(id=None, msg="ok"))
 
 # endregion
 
 
+# region Event User
+
+@strawberry.input(description="First datastructure for invitation type creation")
+class EventUserInputGQLModel:
+    event_id: IDType
+    user_id: IDType
+    invitationtype_id: IDType
+    id: Optional[IDType] = None
+    presencetype_id: Optional[IDType] = None
+
+@strawberry.input(description="Datastructure for invitation type update")
+class EventUserUpdateGQLModel:
+    id: IDType
+    invitationtype_id: Optional[IDType] = None
+    presencetype_id: Optional[IDType] = None
+
+
+@strawberry.input(description="Datastructure for invitation type update")
+class EventUserDeleteGQLModel:
+    event_id: IDType
+    user_id: IDType
+
+@strawberry.mutation(description="creates new presence type")
+async def event_user_insert(self, info: strawberry.types.Info, event_user: EventUserInputGQLModel) -> EventResultGQLModel:
+    loader = PresenceGQLModel.getLoader(info)
+    rows = await loader.filter_by(event_id=event_user.event_id, user_id=event_user.user_id)
+    row = next(rows, None)
+    result = EventResultGQLModel(id=event_user.event_id, msg="ok")
+    result.msg = "ok" if row is None else "fail"
+    if row is None:
+        await loader.insert(event_user)
+    return result
+
+@strawberry.mutation(description="creates new presence type")
+async def event_user_update(self, info: strawberry.types.Info, event_user: EventUserInputGQLModel) -> EventResultGQLModel:
+    return await encapsulateUpdate(info, PresenceGQLModel.getLoader(info), event_user, EventResultGQLModel(id=event_user.event_id, msg="ok"))
+
+@strawberry.mutation(description="creates new presence type")
+async def event_user_delete(self, info: strawberry.types.Info, event_user: EventUserInputGQLModel) -> EventResultGQLModel:
+    loader = PresenceGQLModel.getLoader(info)
+    rows = await loader.filter_by(event_id=event_user.event_id, user_id=event_user.user_id)
+    row = next(rows, None)
+    result = EventResultGQLModel(id=event_user.event_id, msg="ok")
+    result.msg = "ok" if row is not None else "fail"
+    if row is not None:
+        await loader.delete(row)
+    return result
+
+# endregion
+
+
+# region Event Group
+
+@strawberry.input(description="First datastructure for invitation type creation")
+class EventGroupInputGQLModel:
+    event_id: IDType
+    group_id: IDType
+
+
+@strawberry.input(description="Datastructure for invitation type update")
+class EventGroupDeleteGQLModel:
+    event_id: IDType
+    group_id: IDType
+
+@strawberry.mutation(description="creates new presence type")
+async def event_group_insert(self, info: strawberry.types.Info, event_group: EventGroupInputGQLModel) -> EventResultGQLModel:
+    loader = getLoadersFromInfo(info).events_groups
+    rows = await loader.filter_by(event_id=event_group.event_id, group_id=event_group.group_id)
+    row = next(rows, None)
+    result = EventResultGQLModel(id=event_group.event_id, msg="ok")
+    result.msg = "ok" if row is None else "fail"
+    if row is None:
+        await loader.insert(event_group)
+    return result
+
+@strawberry.mutation(description="creates new presence type")
+async def event_group_delete(self, info: strawberry.types.Info, event_group: EventGroupInputGQLModel) -> EventResultGQLModel:
+    loader = getLoadersFromInfo(info).events_groups
+    rows = await loader.filter_by(event_id=event_group.event_id, group_id=event_group.group_id)
+    row = next(rows, None)
+    result = EventResultGQLModel(id=event_group.event_id, msg="ok")
+    result.msg = "ok" if row is not None else "fail"
+    if row is not None:
+        await loader.delete(row)
+    return result
+
+# endregion
 ###########################################################################################################################
 #
 # zde definujte Mutation model
@@ -572,6 +673,13 @@ class Mutation:
 
     event_invitation_type_insert = invitation_type_insert
     event_invitation_type_update = invitation_type_update
+
+    event_user_insert = event_user_insert
+    event_user_delete = event_user_delete
+    event_user_update = event_user_update
+
+    event_group_insert = event_group_insert
+    event_group_delete = event_group_delete
     # pass
 
 # endregion    

@@ -19,6 +19,7 @@ queries = {
             result: eventType {
                 id
                 name
+                events { id }
             }
         }
     }"""
@@ -64,13 +65,12 @@ queries = {
         "readext": """query($id: UUID!){ result: eventById(id: $id) { id } }""",
         "readp": """query($skip: Int, $limit: Int){ result: eventPage(skip: $skip, limit: $limit) { id } }""",
         "create": """mutation ($id: UUID!, $startdate: DateTime!, $enddate: DateTime!,
-            masterevent_id: UUID, eventype_id: UUID!, $name: Str!
+            $masterevent_id: UUID, $eventtype_id: UUID!, $name: String!
         ) {
         result: eventInsert(event: {
                 id: $id, name: $name,
-                startdate: $date, enddate: $date, 
-                studentId: $student_id, semesterId: $semester_id,
-                mastereventId: $masterevent_id, eventypeId: $eventype_id
+                startdate: $startdate, enddate: $enddate, 
+                mastereventId: $masterevent_id, eventtypeId: $eventtype_id
             }) {
             id
             msg
@@ -79,57 +79,60 @@ queries = {
                 lastchange
                 startdate enddate
                 name
+                presences { id }
+                eventType { id }
+                masterEvent { id }
+                subEvents { id }
             }
         }
     }"""        
     },
 
-    # "events_groups": {
-    #     "read": """query($id: UUID!){ result: acClassificationLevelById(id: $id) { id } }""",
-    #     "readext": """query($id: UUID!){ 
-    #       result: acClassificationLevelById(id: $id) {
-    #          id 
-    #       } }""",
-    #     "readp": """query($skip: Int, $limit: Int){ result: acClassificationLevelPage(skip: $skip, limit: $limit) { id } }""",
-    #     "create": """mutation (
-    #         $id: UUID!, $name: String!, $name_en: String
-    #         ) {
-    #     result: programClassificationTypeInsert(classificationType: 
-    #         {
-    #             id: $id, name: $name, nameEn: $name_en
-    #         }) {
-    #         id
-    #         msg
-    #         result: classificationType {
-    #             id
-    #             name
-    #             nameEn
-    #         }
-    #     }
-    # }"""
-    # },
+    "events_groups": {
+        "read": """query($id: UUID!){ result: eventPresenceById(id: $id) { id } }""",
+        "readext": """query($id: UUID!){ result: eventPresenceById(id: $id) { id } }""",
+        "readp": """query($skip: Int, $limit: Int){ result: eventPresencePage(skip: $skip, limit: $limit) { id } }""",
+        "create": """mutation (
+            $event_id: UUID!, $group_id: UUID!
+            ) {
+        result: eventGroupInsert(eventGroup: 
+            {
+                eventId: $event_id, groupId: $group_id
+            }) {
+            id
+            msg
+            result: event {
+                id
+            }
+        }
+    }"""
+    },
 
-    # "events_users": {
-    #     "read": """query($id: UUID!){ result: acClassificationTypeById(id: $id) { id } }""",
-    #     "readext": """query($id: UUID!){ result: acClassificationTypeById(id: $id) { id } }""",
-    #     "readp": """query($skip: Int, $limit: Int){ result: acClassificationTypePage(skip: $skip, limit: $limit) { id } }""",
-    #     "create": """mutation (
-    #         $id: UUID!, $name: String!, $name_en: String
-    #         ) {
-    #     result: programClassificationTypeInsert(classificationType: 
-    #         {
-    #             id: $id, name: $name, nameEn: $name_en
-    #         }) {
-    #         id
-    #         msg
-    #         result: classificationType {
-    #             id
-    #             name
-    #             nameEn
-    #         }
-    #     }
-    # }"""
-    # },                    
+    "events_users": {
+        "read": """query($id: UUID!){ result: eventPresenceById(id: $id) { id } }""",
+        "readext": """query($id: UUID!){ result: eventPresenceById(id: $id) { id } }""",
+        "readp": """query($skip: Int, $limit: Int){ result: eventPresencePage(skip: $skip, limit: $limit) { id } }""",
+        "create": """mutation (
+            $id: UUID, $user_id: UUID!, $event_id: UUID!, $invitationtype_id: UUID!
+            ) {
+        result: eventUserInsert(eventUser: 
+            {
+                id: $id, userId: $user_id, eventId: $event_id, invitationtypeId: $invitationtype_id
+            }) {
+            id
+            msg
+            result: event {
+                id lastchange
+                presences {
+                    presenceType { id }
+                    invitationType { id }
+                    user { id }
+                    event { id }
+                }
+            }
+        }
+    }"""
+    },                    
 
 }
 

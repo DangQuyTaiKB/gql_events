@@ -164,7 +164,8 @@ async def encapsulateInsert(info, loader, entity, result):
 
 async def encapsulateUpdate(info, loader, entity, result):
     row = await loader.update(entity)
-    result.id = entity.id
+    # for special cases when result of op is not same asu updated entity
+    result.id = entity.id if result.id is None else result.id 
     result.msg = "ok" if row is not None else "fail"
     return result
 

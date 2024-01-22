@@ -75,7 +75,7 @@ async def RunOnceAndReturnSessionMaker():
 
 from strawberry.asgi import GraphQL
 
-from src.Dataloaders import createLoaders_3
+from src.Dataloaders import createLoadersContext
 class MyGraphQL(GraphQL):
     """Rozsirena trida zabezpecujici praci se session"""
 
@@ -89,12 +89,14 @@ class MyGraphQL(GraphQL):
     async def get_context(self, request, response):
         parentResult = await GraphQL.get_context(self, request, response)
         asyncSessionMaker = await RunOnceAndReturnSessionMaker()
+        loadersContext = createLoadersContext(asyncSessionMaker)
         return {
             **parentResult,
             "session": self._session,
             "asyncSessionMaker": asyncSessionMaker,
             "user": self._user,
-            "loaders": await createLoaders_3(asyncSessionMaker)
+            # "loaders": await createLoaders_3(asyncSessionMaker)
+            **loadersContext
         }
 
 

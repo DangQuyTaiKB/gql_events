@@ -40,8 +40,12 @@ class EventModel(BaseModel):
     id = UUIDColumn()
     name = Column(String)
     name_en = Column(String)
+    description = Column(String)
     startdate = Column(DateTime)
     enddate = Column(DateTime)
+    
+    place = Column(String)
+    place_id = UUIDFKey(nullable=True)
 
     created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
@@ -95,7 +99,7 @@ class PresenceModel(BaseModel):
     event_id = Column(ForeignKey("events.id"), index=True)
     user_id = UUIDFKey()#Column(ForeignKey("users.id"), index=True)
     
-    invitation_id = Column(ForeignKey("eventinvitationtypes.id"), index=True)
+    invitationtype_id = Column(ForeignKey("eventinvitationtypes.id"), index=True)
     presencetype_id = Column(ForeignKey("eventpresencetypes.id"), index=True, nullable=True)
 
     created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
