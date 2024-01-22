@@ -391,7 +391,9 @@ class EventInsertGQLModel:
         strawberry.field(description="start date of event", default_factory=lambda: datetime.datetime.now())
     enddate: Optional[datetime.datetime] = \
         strawberry.field(description="end date of event", default_factory=lambda:datetime.datetime.now() + datetime.timedelta(minutes = 30))    
-    pass
+    createdby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
+
 
 @strawberry.input(description="Datastructure for update")
 class EventUpdateGQLModel:
@@ -402,6 +404,8 @@ class EventUpdateGQLModel:
     type_id: Optional[IDType] = None
     startdate: Optional[datetime.datetime] = None
     enddate: Optional[datetime.datetime] = None
+    changedby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
     
 @strawberry.type(description="""Result of user operation""")
 class EventResultGQLModel:
@@ -435,6 +439,8 @@ class PresenceInsertGQLModel:
     invitationtype_id: IDType
     presencetype_id: Optional[IDType] = None
     id: Optional[IDType] = None
+    createdby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.input(description="Datastructure for update")
 class PresenceUpdateGQLModel:
@@ -442,6 +448,8 @@ class PresenceUpdateGQLModel:
     lastchange: datetime.datetime
     invitationtype_id: Optional[IDType] = None
     presencetype_id: Optional[IDType] = None
+    changedby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
     
 @strawberry.type(description="""Result of user operation""")
 class PresenceResultGQLModel:
@@ -469,12 +477,16 @@ class EventTypeInsertGQLModel:
     name: str = strawberry.field(description="name of event type")
     name_en: str
     id: Optional[IDType] = None
+    createdby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.input(description="Datastructure for event type update")
 class EventTypeUpdateGQLModel:
     id: IDType
     name: Optional[str] = None
     name_en: Optional[str] = None
+    changedby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.type(description="""Result of event type operation""")
 class EventTypeResultGQLModel:
@@ -502,12 +514,16 @@ class PresenceTypeInsertGQLModel:
     name: str
     name_en: str
     id: Optional[IDType] = None
+    createdby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.input(description="Datastructure for event type update")
 class PresenceTypeUpdateGQLModel:
     id: IDType
     name: Optional[str] = None
     name_en: Optional[str] = None
+    changedby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.type(description="""Result of event type operation""")
 class PresenceTypeResultGQLModel:
@@ -535,12 +551,16 @@ class InvitationTypeInsertGQLModel:
     name: str
     name_en: Optional[str] = None
     id: Optional[IDType] = None
+    createdby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.input(description="Datastructure for invitation type update")
 class InvitationTypeUpdateGQLModel:
     id: IDType
     name: Optional[str] = None
     name_en: Optional[str] = None
+    changedby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.type(description="""Result of event type operation""")
 class InvitationTypeResultGQLModel:
@@ -572,12 +592,16 @@ class EventUserInputGQLModel:
     invitationtype_id: IDType
     id: Optional[IDType] = None
     presencetype_id: Optional[IDType] = None
+    createdby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.input(description="Datastructure for invitation type update")
 class EventUserUpdateGQLModel:
     id: IDType
     invitationtype_id: Optional[IDType] = None
     presencetype_id: Optional[IDType] = None
+    changedby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 
 @strawberry.input(description="Datastructure for invitation type update")
@@ -620,6 +644,8 @@ async def event_user_delete(self, info: strawberry.types.Info, event_user: Event
 class EventGroupInputGQLModel:
     event_id: IDType
     group_id: IDType
+    createdby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 
 @strawberry.input(description="Datastructure for invitation type update")
