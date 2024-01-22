@@ -14,7 +14,7 @@ from uoishelpers.resolvers import (
 )
 from uoishelpers.resolvers import putSingleEntityToDb
 
-from gql_events.DBDefinitions import BaseModel
+from src.DBDefinitions import BaseModel
 
 ## Nasleduji funkce, ktere lze pouzit jako asynchronni resolvery
 
@@ -24,7 +24,7 @@ from gql_events.DBDefinitions import BaseModel
 #
 ###########################################################################################################################
 
-from gql_events.DBDefinitions import (
+from src.DBDefinitions import (
     EventModel,
     EventGroupModel,
     EventTypeModel,

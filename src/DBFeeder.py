@@ -1,6 +1,6 @@
 from functools import cache
 
-from gql_events.DBDefinitions import (
+from src.DBDefinitions import (
     EventModel, 
     EventTypeModel, 
     EventGroupModel, 
@@ -171,8 +171,8 @@ def get_demodata():
 
 async def initDB(asyncSessionMaker):
 
-    defaultNoDemo = "_________"
-    if defaultNoDemo == os.environ.get("DEMO", defaultNoDemo):
+    isDemo = os.environ.get("DEMO", None) in ["True", True]
+    if not isDemo:
         print("No Demo mode")
         dbModels = [
             EventTypeModel,           

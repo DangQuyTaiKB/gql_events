@@ -1,10 +1,6 @@
 from typing import Optional, List, Union, Annotated
 import strawberry
 from dataclasses import dataclass
-from contextlib import asynccontextmanager
-
-from ._GraphResolvers import getLoadersFromInfo
-
 
 ###########################################################################################################################
 #
@@ -14,8 +10,10 @@ from ._GraphResolvers import getLoadersFromInfo
 #
 ###########################################################################################################################
 import datetime
-from gql_events.GraphResolvers import resolveEventsForUser
+from src.GraphResolvers import resolveEventsForUser
 from ._GraphResolvers import (
+    getLoadersFromInfo,
+    
     IDType,
 
     resolve_reference,
@@ -27,12 +25,16 @@ from ._GraphResolvers import (
     resolve_createdby,
     resolve_changedby,
 
-    asPage
+    asPage,
+    
+    encapsulateInsert,
+    encapsulateUpdate    
     )
 
 GroupGQLModel = Annotated["GroupGQLModel", strawberry.lazy(".GraphTypeDefinitionsExt")]
 UserGQLModel = Annotated["UserGQLModel", strawberry.lazy(".GraphTypeDefinitionsExt")]
 
+# region Presence Model
 @strawberry.federation.type(keys=["id"], description="""Describes a relation of an user to the event by invitation (like invited) and participation (like absent)""")
 class PresenceGQLModel:
     @classmethod
@@ -67,7 +69,9 @@ class PresenceGQLModel:
     async def event(self, info: strawberry.types.Info) -> Optional['EventGQLModel']:
         result = await EventGQLModel.resolve_reference(info, id=self.event_id)
         return result
+# endregion
 
+# region EventType Model
 @strawberry.federation.type(keys=["id"], description="""Represents an event type""")
 class EventTypeGQLModel:
 
@@ -91,7 +95,9 @@ class EventTypeGQLModel:
         loader = getLoadersFromInfo(info).event_eventtype_id
         result = await loader.load(self.id)
         return result
+# endregion
 
+# region PresenceType Model
 @strawberry.federation.type(keys=["id"], description="""Represents a type of presence (like Present)""")
 class PresenceTypeGQLModel:
 
@@ -110,7 +116,9 @@ class PresenceTypeGQLModel:
     createdby = resolve_createdby
     changedby = resolve_changedby
 
+# endregion
 
+# region InvitationType Model
 @strawberry.federation.type(keys=["id"], description="""Represents if an user has been invited to the event ot whatever""")
 class InvitationTypeGQLModel:
 
@@ -130,17 +138,19 @@ class InvitationTypeGQLModel:
     changedby = resolve_changedby
 
 
-from gql_events.GraphResolvers import resolveEventsForGroup
+from src.GraphResolvers import resolveEventsForGroup
 
 
 import datetime
-from gql_events.GraphResolvers import (
+from src.GraphResolvers import (
     resolveEventById,
     resolveGroupsForEvent,
     resolvePresencesForEvent
 )
 
+# endregion
 
+# region Event Model
 @strawberry.federation.type(keys=["id"], description="""Entity representing an event (calendar item)""")
 class EventGQLModel:
 
@@ -179,7 +189,8 @@ class EventGQLModel:
 
     @strawberry.field(description="""Participants of the event and if they were absent or so...""")
     async def presences(self, info: strawberry.types.Info) -> List["PresenceGQLModel"]:
-        loader = getLoadersFromInfo(info).presences
+        # loader = getLoadersFromInfo(info).presences
+        loader = PresenceGQLModel.getLoader(info)
         result = await loader.filter_by(event_id=self.id)
         return result
 
@@ -197,9 +208,12 @@ class EventGQLModel:
 
     @strawberry.field(description="""events which are contained by this event (aka all lessons for the semester)""")
     async def sub_events(self, info: strawberry.types.Info) -> List["EventGQLModel"]:
-        loader = getLoadersFromInfo(info).events
+        # loader = getLoadersFromInfo(info).events
+        loader = EventGQLModel.getLoader(info)
         result = await loader.filter_by(masterevent_id=self.id)
         return result
+# endregion
+
 
 
 ###########################################################################################################################
@@ -210,6 +224,7 @@ class EventGQLModel:
 
 from uoishelpers.resolvers import createInputs
 
+# region EventType Model
 @createInputs
 @dataclass
 class EventTypeInputFilter:
@@ -230,7 +245,9 @@ async def event_type_page(self, info: strawberry.types.Info, skip: Optional[int]
     )
 async def event_type_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["EventTypeGQLModel"]:
     return await EventTypeGQLModel.resolve_reference(info=info, id=id)
+# endregion
 
+# region PresenceType Model
 @createInputs
 @dataclass
 class PresenceTypeInputFilter:
@@ -252,7 +269,9 @@ async def presence_type_page(self, info: strawberry.types.Info, skip: Optional[i
 async def presence_type_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["PresenceTypeGQLModel"]:
     return await PresenceTypeGQLModel.resolve_reference(info=info, id=id)
 
+# endregion
 
+# region InvitationType Model
 @createInputs
 @dataclass
 class InvitationTypeInputFilter:
@@ -273,7 +292,9 @@ async def invitation_type_page(self, info: strawberry.types.Info, skip: Optional
     )
 async def invitation_type_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["InvitationTypeGQLModel"]:
     return await InvitationTypeGQLModel.resolve_reference(info=info, id=id)
+# endregion
 
+# region Event Model
 
 @createInputs
 @dataclass
@@ -298,7 +319,9 @@ async def event_page(self, info: strawberry.types.Info, skip: Optional[int] = 0,
     )
 async def event_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["EventGQLModel"]:
     return await EventGQLModel.resolve_reference(info=info, id=id)
+# endregion
 
+# region Presence Model
 @createInputs
 @dataclass
 class PresenceInputFilter:
@@ -312,13 +335,15 @@ async def presence_page(self, info: strawberry.types.Info, skip: Optional[int] =
 async def presence_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["PresenceGQLModel"]:
     return await PresenceGQLModel.resolve_reference(info=info, id=id)
 
-
+# endregion
 ###########################################################################################################################
 #
 # zde definujte svuj Query model
 #
 ###########################################################################################################################
 
+
+# region Query
 @strawberry.type(description="""Type for query root""")
 class Query:
     event_by_id = event_by_id
@@ -327,11 +352,12 @@ class Query:
     event_type_by_id = event_type_by_id
     event_type_page = event_type_page
 
-    presence_type_by_id = presence_type_by_id
-    presence_type_page = presence_type_page
+    event_presence_type_by_id = presence_type_by_id
+    event_presence_type_page = presence_type_page
 
-    invitation_type_by_id = invitation_type_by_id
-    invitation_type_page = invitation_type_page
+    event_invitation_type_by_id = invitation_type_by_id
+    event_invitation_type_page = invitation_type_page
+# endregion
 
 ###########################################################################################################################
 #
@@ -340,7 +366,7 @@ class Query:
 ###########################################################################################################################
 
 from typing import Optional
-
+# region Event
 @strawberry.input(description="Datastructure for insert")
 class EventInsertGQLModel:
     name: str
@@ -373,35 +399,21 @@ class EventResultGQLModel:
         result = await EventGQLModel.resolve_reference(info, self.id)
         return result
 
-from ._GraphResolvers import (
-    encapsulateInsert,
-    encapsulateUpdate
-)
-
-# @strawberry.mutation(description="creates new event")
-# async def event_insert(self, info: strawberry.types.Info, event: EventInsertGQLModel) -> EventResultGQLModel:
-#     return EventResultGQLModel()
-#     # return await encapsulateInsert(getLoadersFromInfo(info).events, event, EventResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(
     description="C operation",
         # permission_classes=[OnlyForAuthentized()]
         )
 async def event_insert(self, info: strawberry.types.Info, event: EventInsertGQLModel) -> EventResultGQLModel:
-    # user = getUserFromInfo(info)
-    # event.createdby = IDType(user["id"])
-
-    loader = getLoadersFromInfo(info).events
-    row = await loader.insert(event)
-    result = EventResultGQLModel(id=row.id, msg="ok")
-    return result
-
+    return await encapsulateInsert(info, EventGQLModel.getLoader(info), event, EventResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def event_update(self, info: strawberry.types.Info, event: EventUpdateGQLModel) -> EventResultGQLModel:
-    return await encapsulateUpdate(getLoadersFromInfo(info).events, event, EventResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, EventGQLModel.getLoader(info), event, EventResultGQLModel(id=None, msg="ok"))
 
+# endregion
 
+# region PresenceType
 @strawberry.input(description="Datastructure for insert")
 class PresenceInsertGQLModel:
     user_id: IDType
@@ -429,13 +441,15 @@ class PresenceResultGQLModel:
 
 @strawberry.mutation(description="creates new presence")
 async def presence_insert(self, info: strawberry.types.Info, presence: PresenceInsertGQLModel) -> PresenceResultGQLModel:
-    return await encapsulateInsert(getLoadersFromInfo(info).presences, presence, PresenceResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, getLoadersFromInfo(info).presences, presence, PresenceResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def presence_update(self, info: strawberry.types.Info, presence: PresenceUpdateGQLModel) -> PresenceResultGQLModel:
-    return await encapsulateUpdate(getLoadersFromInfo(info).presences, presence, PresenceResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, getLoadersFromInfo(info).presences, presence, PresenceResultGQLModel(id=None, msg="ok"))
 
+# endregion
 
+# region EventType
 @strawberry.input(description="First datastructure for event type creation")
 class EventTypeInsertGQLModel:
     name: str = strawberry.field(description="name of event type")
@@ -460,13 +474,15 @@ class EventTypeResultGQLModel:
     
 @strawberry.mutation(description="creates new presence")
 async def event_type_insert(self, info: strawberry.types.Info, event_type: EventTypeInsertGQLModel) -> EventTypeResultGQLModel:
-    return await encapsulateInsert(getLoadersFromInfo(info).presences, event_type, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, getLoadersFromInfo(info).presences, event_type, EventTypeResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def event_type_update(self, info: strawberry.types.Info, event_type: EventTypeUpdateGQLModel) -> EventTypeResultGQLModel:
-    return await encapsulateUpdate(getLoadersFromInfo(info).presences, event_type, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, getLoadersFromInfo(info).presences, event_type, EventTypeResultGQLModel(id=None, msg="ok"))
 
+# endregion
 
+# region PresenceType
 @strawberry.input(description="First datastructure for event type creation")
 class PresenceTypeInsertGQLModel:
     name: str
@@ -491,16 +507,19 @@ class PresenceTypeResultGQLModel:
     
 @strawberry.mutation(description="creates new presence type")
 async def presence_type_insert(self, info: strawberry.types.Info, presence_type: PresenceTypeInsertGQLModel) -> PresenceTypeResultGQLModel:
-    return await encapsulateInsert(getLoadersFromInfo(info).presencetypes, presence_type, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, getLoadersFromInfo(info).presencetypes, presence_type, EventTypeResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def presence_type_update(self, info: strawberry.types.Info, presence_type: PresenceTypeUpdateGQLModel) -> PresenceTypeResultGQLModel:
-    return await encapsulateUpdate(getLoadersFromInfo(info).presencetypes, presence_type, PresenceTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, getLoadersFromInfo(info).presencetypes, presence_type, PresenceTypeResultGQLModel(id=None, msg="ok"))
 
+# endregion
+
+# region InvitationType
 @strawberry.input(description="First datastructure for invitation type creation")
 class InvitationTypeInsertGQLModel:
     name: str
-    name_en: str
+    name_en: Optional[str] = None
     id: Optional[IDType] = None
 
 @strawberry.input(description="Datastructure for invitation type update")
@@ -521,11 +540,13 @@ class InvitationTypeResultGQLModel:
     
 @strawberry.mutation(description="creates new presence type")
 async def invitation_type_insert(self, info: strawberry.types.Info, invitation_type: InvitationTypeInsertGQLModel) -> InvitationTypeResultGQLModel:
-    return await encapsulateInsert(getLoadersFromInfo(info).presencetypes, invitation_type, InvitationTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, getLoadersFromInfo(info).presencetypes, invitation_type, InvitationTypeResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(description="updates the event")
 async def invitation_type_update(self, info: strawberry.types.Info, invitation_type: InvitationTypeUpdateGQLModel) -> InvitationTypeResultGQLModel:
-    return await encapsulateUpdate(getLoadersFromInfo(info).presencetypes, invitation_type, InvitationTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, getLoadersFromInfo(info).presencetypes, invitation_type, InvitationTypeResultGQLModel(id=None, msg="ok"))
+
+# endregion
 
 
 ###########################################################################################################################
@@ -534,26 +555,26 @@ async def invitation_type_update(self, info: strawberry.types.Info, invitation_t
 #
 ###########################################################################################################################
 
-
+# region Mutation
 @strawberry.federation.type(extend=True)
 class Mutation:
     event_insert = event_insert
     event_update = event_update
 
-    presence_insert = presence_insert
-    presence_update = presence_update
+    event_presence_insert = presence_insert
+    event_presence_update = presence_update
 
     event_type_insert = event_type_insert
     event_type_update = event_type_update
 
-    presence_type_insert = presence_type_insert
-    presence_type_update = presence_type_update
+    event_presence_type_insert = presence_type_insert
+    event_presence_type_update = presence_type_update
 
-    invitation_type_insert = invitation_type_insert
-    invitation_type_update = invitation_type_update
+    event_invitation_type_insert = invitation_type_insert
+    event_invitation_type_update = invitation_type_update
     # pass
 
-    
+# endregion    
 ###########################################################################################################################
 #
 # Schema je pouzito v main.py, vsimnete si parametru types, obsahuje vyjmenovane modely. Bez explicitniho vyjmenovani

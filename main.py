@@ -9,12 +9,12 @@ from strawberry.fastapi import GraphQLRouter
 
 ## Definice GraphQL typu (pomoci strawberry https://strawberry.rocks/)
 ## Strawberry zvoleno kvuli moznosti mit federovane GraphQL API (https://strawberry.rocks/docs/guides/federation, https://www.apollographql.com/docs/federation/)
-from gql_events.GraphTypeDefinitions import Query
+from src.GraphTypeDefinitions import Query
 
 ## Definice DB typu (pomoci SQLAlchemy https://www.sqlalchemy.org/)
 ## SQLAlchemy zvoleno kvuli moznost komunikovat s DB asynchronne
 ## https://docs.sqlalchemy.org/en/14/core/future.html?highlight=select#sqlalchemy.future.select
-from gql_events.DBDefinitions import startEngine, ComposeConnectionString
+from src.DBDefinitions import startEngine, ComposeConnectionString
 
 ## Zabezpecuje prvotni inicializaci DB a definovani Nahodne struktury pro "Univerzity"
 # from gql_workflow.DBFeeder import createSystemDataStructureRoleTypes, createSystemDataStructureGroupTypes
@@ -35,7 +35,7 @@ def singleCall(asyncFunc):
 
     return result
 
-from gql_events.DBFeeder import initDB
+from src.DBFeeder import initDB
 
 @singleCall
 async def RunOnceAndReturnSessionMaker():
@@ -45,7 +45,7 @@ async def RunOnceAndReturnSessionMaker():
     print(f'starting engine for "{connectionString}"')
 
     import os
-    makeDrop = os.environ.get("DEMO", "") == "true"
+    makeDrop = os.environ.get("DEMO", "") == "True"
     if makeDrop:
         print("drop data")
     else:
@@ -75,7 +75,7 @@ async def RunOnceAndReturnSessionMaker():
 
 from strawberry.asgi import GraphQL
 
-from gql_events.Dataloaders import createLoaders_3
+from src.Dataloaders import createLoaders_3
 class MyGraphQL(GraphQL):
     """Rozsirena trida zabezpecujici praci se session"""
 
@@ -98,7 +98,7 @@ class MyGraphQL(GraphQL):
         }
 
 
-from gql_events.GraphTypeDefinitions import schema
+from src.GraphTypeDefinitions import schema
 
 ## ASGI app, kterou "moutneme"
 graphql_app = MyGraphQL(schema, graphiql=True, allow_queries_via_get=True)

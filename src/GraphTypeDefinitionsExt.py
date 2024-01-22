@@ -3,15 +3,16 @@ import dataclasses
 import datetime
 
 from typing import List, Optional
-from ._GraphResolvers import IDType, createInputs
+from ._GraphResolvers import getLoadersFromInfo, IDType
+from uoishelpers.resolvers import createInputs
 
 @classmethod
 async def resolve_reference(cls, info: strawberry.types.Info, id: IDType):
     return cls(id=id)
 
-from .GraphTypeDefinitions import EventTypeWhereFilter, EventGQLModel
+from .GraphTypeDefinitions import EventGQLModel
 from .GraphResolvers import (
-    getLoadersFromInfo, 
+    
     create_statement_for_user_events2, 
     create_statement_for_group_events2
     )
@@ -31,8 +32,8 @@ class UGEventInputFilter:
     masterevent_id: IDType
     eventtype_id: IDType
 
-    from .GraphTypeDefinitions import EventTypeWhereFilter
-    eventtype: EventTypeWhereFilter
+    # from .GraphTypeDefinitions import EventTypeWhereFilter
+    # eventtype: EventTypeWhereFilter
 
 @strawberry.federation.type(extend=True, keys=["id"])
 class UserGQLModel:

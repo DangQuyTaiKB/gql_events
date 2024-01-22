@@ -156,13 +156,13 @@ def asPage(field, *, extendedfilter=None):
     return decorator(field) if field else decorator
 
 
-async def encapsulateInsert(loader, entity, result):
+async def encapsulateInsert(info, loader, entity, result):
     row = await loader.insert(entity)
     result.msg = "ok"
     result.id = row.id
     return result
 
-async def encapsulateUpdate(loader, entity, result):
+async def encapsulateUpdate(info, loader, entity, result):
     row = await loader.update(entity)
     result.id = entity.id
     result.msg = "ok" if row is not None else "fail"
