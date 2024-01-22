@@ -8,8 +8,20 @@ IDType = uuid.UUID
 
 from ._GraphPermissions import OnlyForAuthentized
 
-def getLoadersFromInfo(info):
-    return info.context["loaders"]
+def getLoadersFromInfo(info: strawberry.types.Info):
+    result = info.context.get("loaders", None)
+    assert result is not None, "Loaders are asked for but not present in context, check context preparation"
+    return result
+
+def getUserFromInfo(info: strawberry.types.Info):
+    result = info.context.get("user", None)
+    if result is None:
+        request = info.context.get("request", None)
+        assert request is not None, "request should be in context, something is wrong"
+        result = request.scope.get("user", None)
+    assert result is not None, "User is wanted but not present in context or in request.scope, check it"
+    return result
+
 
 @classmethod
 async def resolve_reference(cls, info: strawberry.types.Info, id: IDType):
@@ -157,18 +169,24 @@ def asPage(field, *, extendedfilter=None):
 
 
 async def encapsulateInsert(info, loader, entity, result):
+    actinguser = getUserFromInfo(info)
+    id = uuid.UUID(actinguser["id"])
+    entity.createdby = id
+
     row = await loader.insert(entity)
-    result.msg = "ok"
+    assert result.msg is not None, "result msg must be predefined (Operation Insert)"
     result.id = row.id
     return result
 
 async def encapsulateUpdate(info, loader, entity, result):
+    actinguser = getUserFromInfo(info)
+    id = uuid.UUID(actinguser["id"])
+    entity.changedby = id
+
     row = await loader.update(entity)
-    # for special cases when result of op is not same asu updated entity
     result.id = entity.id if result.id is None else result.id 
     result.msg = "ok" if row is not None else "fail"
     return result
-
 
 # def asInsert(field):
 #     def decorator(field):
