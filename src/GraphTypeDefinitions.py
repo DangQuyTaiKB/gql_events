@@ -384,7 +384,7 @@ from typing import Optional
 @strawberry.input(description="Datastructure for insert")
 class EventInsertGQLModel:
     name: str
-    eventtype_id: IDType
+    type_id: IDType
     id: Optional[IDType] = None
     masterevent_id: Optional[IDType] = None
     startdate: Optional[datetime.datetime] = \
@@ -399,7 +399,7 @@ class EventUpdateGQLModel:
     lastchange: datetime.datetime
     name: Optional[str] = None
     masterevent_id: Optional[IDType] = None
-    eventtype_id: Optional[IDType] = None
+    type_id: Optional[IDType] = None
     startdate: Optional[datetime.datetime] = None
     enddate: Optional[datetime.datetime] = None
     

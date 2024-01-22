@@ -65,12 +65,12 @@ queries = {
         "readext": """query($id: UUID!){ result: eventById(id: $id) { id } }""",
         "readp": """query($skip: Int, $limit: Int){ result: eventPage(skip: $skip, limit: $limit) { id } }""",
         "create": """mutation ($id: UUID!, $startdate: DateTime!, $enddate: DateTime!,
-            $masterevent_id: UUID, $eventtype_id: UUID!, $name: String!
+            $masterevent_id: UUID, $type_id: UUID!, $name: String!
         ) {
         result: eventInsert(event: {
                 id: $id, name: $name,
                 startdate: $startdate, enddate: $enddate, 
-                mastereventId: $masterevent_id, eventtypeId: $eventtype_id
+                mastereventId: $masterevent_id, typeId: $type_id
             }) {
             id
             msg
