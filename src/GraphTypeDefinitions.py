@@ -169,6 +169,18 @@ class EventGQLModel:
     createdby = resolve_createdby
     changedby = resolve_changedby
 
+    @strawberry.field(description="""Event description""")
+    def description(self) -> Optional[str]:
+        return self.description
+
+    @strawberry.field(description="""Place""")
+    def place(self) -> Optional[str]:
+        return self.place
+
+    @strawberry.field(description="""Place id""")
+    def place_id(self) -> Optional[IDType]:
+        return self.place_id
+
     @strawberry.field(description="""Date&time of event begin""")
     def startdate(self) -> Optional[datetime.datetime]:
         return self.startdate
