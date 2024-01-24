@@ -171,14 +171,8 @@ def get_demodata():
 
 async def initDB(asyncSessionMaker):
 
-    isDemo = os.environ.get("DEMO", None) in ["True", True]
-    if not isDemo:
-        print("No Demo mode")
-        dbModels = [
-            EventTypeModel,           
-            PresenceTypeModel, 
-            InvitationTypeModel        ]
-    else:
+    isDemo = os.environ.get("DEMODATA", None)
+    if isDemo:
         print("Demo mode")
         dbModels = [
             EventTypeModel, 
@@ -187,6 +181,14 @@ async def initDB(asyncSessionMaker):
             EventModel, 
             EventGroupModel, 
             PresenceModel, 
+        ]
+    else:
+
+        print("No Demo mode")
+        dbModels = [
+            EventTypeModel,           
+            PresenceTypeModel, 
+            InvitationTypeModel        
         ]
 
     jsonData = get_demodata()
