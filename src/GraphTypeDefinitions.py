@@ -92,8 +92,8 @@ class EventTypeGQLModel:
 
     @strawberry.field(description="""Related events""")
     async def events(self, info: strawberry.types.Info) -> List['EventGQLModel']:
-        loader = getLoadersFromInfo(info).event_eventtype_id
-        result = await loader.load(self.id)
+        loader = EventGQLModel.getLoader(info)
+        result = await loader.filter_by(type_id=self.id)
         return result
 # endregion
 
@@ -192,12 +192,9 @@ class EventGQLModel:
     @strawberry.field(description="""Groups of users linked to the event""")
     async def groups(self, info: strawberry.types.Info) -> List["GroupGQLModel"]:
         from .GraphTypeDefinitionsExt import GroupGQLModel
-        async with withInfo(info) as session:
-            links = await resolveGroupsForEvent(session, self.id)
-            # result = list(map(lambda item: GroupGQLModel(id=item.group_id), links))
-            # return result
-            return map(lambda item: GroupGQLModel(id=item.group_id), links)
-            
+        loader = getLoadersFromInfo(info).events_groups
+        rows = await loader.filter_by(event_id=self.id)
+        return map(lambda row: GroupGQLModel(id=row.group_id), rows)           
 
     @strawberry.field(description="""Participants of the event and if they were absent or so...""")
     async def presences(self, info: strawberry.types.Info) -> List["PresenceGQLModel"]:
@@ -487,7 +484,7 @@ async def presence_update(self, info: strawberry.types.Info, presence: PresenceU
 @strawberry.input(description="First datastructure for event type creation")
 class EventTypeInsertGQLModel:
     name: str = strawberry.field(description="name of event type")
-    name_en: str
+    name_en: Optional[str] = strawberry.field(description="english name of event type", default=None)
     id: Optional[IDType] = None
     createdby: strawberry.Private[IDType] = None
     rbacobject: strawberry.Private[IDType] = None

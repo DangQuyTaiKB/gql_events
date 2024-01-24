@@ -7,7 +7,12 @@ import uuid
 queries = {
     "eventtypes": {
         "read": """query($id: UUID!){ result: eventTypeById(id: $id) { id } }""",
-        "readext": """query($id: UUID!){ result: eventTypeById(id: $id) { id } }""",
+        "readext": """query($id: UUID!){ 
+            result: eventTypeById(id: $id) { 
+                id 
+                events { id }
+            }
+        }""",
         "readp": """query($skip: Int, $limit: Int){ result: eventTypePage(skip: $skip, limit: $limit) { id } }""",
         "create": """mutation ($id: UUID!, $name: String!, $name_en: String) {
             result: eventTypeInsert(
@@ -62,7 +67,15 @@ queries = {
     },         
     "events": {
         "read": """query($id: UUID!){ result: eventById(id: $id) { id } }""",
-        "readext": """query($id: UUID!){ result: eventById(id: $id) { id } }""",
+        "readext": """query($id: UUID!){ 
+            result: eventById(id: $id) {
+                id 
+                description
+                place
+                placeId
+                groups { id }
+            } 
+        }""",
         "readp": """query($skip: Int, $limit: Int){ result: eventPage(skip: $skip, limit: $limit) { id } }""",
         "create": """mutation ($id: UUID!, $startdate: DateTime!, $enddate: DateTime!,
             $masterevent_id: UUID, $type_id: UUID!, $name: String!
@@ -157,7 +170,7 @@ async def FillDataViaGQL(DBModels, DemoData, GQLInsertQueries, ClientExecutorAdm
         table = DemoData.get(tablename, None)
         assert table is not None, f"{tablename} is missing in DemoData"
 
-        readQuery = queryset.get("read", None)
+        readQuery = queryset.get("readext", None)
         assert readQuery is not None, f"missing read op on table {tablename}"
         createQuery = queryset.get("create", None)
         assert createQuery is not None, f"missing create op on table {tablename}"
@@ -172,7 +185,7 @@ async def FillDataViaGQL(DBModels, DemoData, GQLInsertQueries, ClientExecutorAdm
                     variable_values[key] = f"{value}"
 
             # readResponse = await ClientExecutorAdmin(query=queryset["read"], variable_values=variable_values)
-            readResponse = await ClientExecutorAdmin(query=queryset["readext"], variable_values=variable_values)
+            readResponse = await ClientExecutorAdmin(query=readQuery, variable_values=variable_values)
             queriesR = queriesR + 1
             if readResponse["data"]["result"] is not None:
                 logging.info(f"row with id `{variable_values['id']}` already exists in `{tablename}`")
