@@ -38,21 +38,27 @@ async def resolve_reference(cls, info: strawberry.types.Info, id: IDType):
 
 @strawberry.field(
     description="""Entity primary key""",
-    # permission_classes=[OnlyForAuthentized()]
+    permission_classes=[
+        OnlyForAuthentized
+    ]
     )
 def resolve_id(self) -> IDType:
     return self.id
 
 @strawberry.field(
     description="""Name """,
-    # permission_classes=[OnlyForAuthentized()]
+    permission_classes=[
+        OnlyForAuthentized
+    ]
     )
 def resolve_name(self) -> str:
     return self.name
 
 @strawberry.field(
     description="""English name""",
-    #permission_classes=[OnlyForAuthentized()]
+    permission_classes=[
+        OnlyForAuthentized
+    ]
     )
 def resolve_name_en(self) -> str:
     result = self.name_en if self.name_en else ""
@@ -60,14 +66,18 @@ def resolve_name_en(self) -> str:
 
 @strawberry.field(
     description="""Time of last update""",
-    #permission_classes=[OnlyForAuthentized()]
+    permission_classes=[
+        OnlyForAuthentized
+    ]
     )
 def resolve_lastchange(self) -> datetime.datetime:
     return self.lastchange
 
 @strawberry.field(
     description="""Time of entity introduction""",
-    #permission_classes=[OnlyForAuthentized()]
+    permission_classes=[
+        OnlyForAuthentized
+    ]
     )
 def resolve_created(self) -> typing.Optional[datetime.datetime]:
     return self.created
@@ -80,18 +90,24 @@ async def resolve_user(user_id):
     return result
     
 @strawberry.field(description="""Who created entity""",
-        permission_classes=[OnlyForAuthentized()])
+    permission_classes=[
+        OnlyForAuthentized
+    ])
 async def resolve_createdby(self) -> typing.Optional["UserGQLModel"]:
     return await resolve_user(self.createdby)
 
 @strawberry.field(description="""Who made last change""",
-        permission_classes=[OnlyForAuthentized()])
+    permission_classes=[
+        OnlyForAuthentized
+    ])
 async def resolve_changedby(self) -> typing.Optional["UserGQLModel"]:
     return await resolve_user(self.changedby)
 
 RBACObjectGQLModel = typing.Annotated["RBACObjectGQLModel", strawberry.lazy(".GraphTypeDefinitionsExt")]
 @strawberry.field(description="""Who made last change""",
-        permission_classes=[OnlyForAuthentized()])
+            permission_classes=[
+        OnlyForAuthentized
+    ])
 async def resolve_rbacobject(self, info: strawberry.types.Info) -> typing.Optional[RBACObjectGQLModel]:
     from .GraphTypeDefinitionsExt import RBACObjectGQLModel
     result = None if self.rbacobject is None else await RBACObjectGQLModel.resolve_reference(info, self.rbacobject)
@@ -186,6 +202,17 @@ async def encapsulateUpdate(info, loader, entity, result):
     row = await loader.update(entity)
     result.id = entity.id if result.id is None else result.id 
     result.msg = "ok" if row is not None else "fail"
+    return result
+
+import sqlalchemy.exc
+
+async def encapsulateDelete(info, loader, id, result):
+    # try:
+    #     await loader.delete(id)
+    # except sqlalchemy.exc.IntegrityError as e:
+    #     result.msg='fail'
+    # return result
+    await loader.delete(id)
     return result
 
 # def asInsert(field):

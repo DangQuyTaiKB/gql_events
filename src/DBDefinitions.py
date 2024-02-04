@@ -17,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import declarative_base
-from .uuid import UUIDColumn, UUIDFKey
+from .UUID import UUIDColumn, UUIDFKey
 BaseModel = declarative_base()
 
 
@@ -64,6 +64,8 @@ class EventTypeModel(BaseModel):
     name = Column(String)
     name_en = Column(String)
 
+    category_id = Column(ForeignKey("eventcategories.id"), index=True)
+
     created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
@@ -71,6 +73,21 @@ class EventTypeModel(BaseModel):
     rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
 
     events = relationship("EventModel", back_populates="type")
+
+class EventCategoryModel(BaseModel):
+    __tablename__ = "eventcategories"
+
+    id = UUIDColumn()
+    name = Column(String)
+    name_en = Column(String)
+
+    created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
+
+    eventtypes = relationship("EventTypeModel", viewonly=True)
 
 class EventGroupModel(BaseModel):
     __tablename__ = "events_groups"
@@ -107,6 +124,9 @@ class PresenceModel(BaseModel):
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
+
+    presence_type = relationship("PresenceTypeModel", viewonly=True)
+    invitation_type = relationship("InvitationTypeModel", viewonly=True)
 
 class PresenceTypeModel(BaseModel):
     __tablename__ = "eventpresencetypes"
