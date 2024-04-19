@@ -17,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import declarative_base
-from .uuid import UUIDColumn, UUIDFKey
+from .UUID import UUIDColumn, UUIDFKey
 BaseModel = declarative_base()
 
 
@@ -55,10 +55,29 @@ class EventModel(BaseModel):
 
     masterevent_id = Column(ForeignKey("events.id"), index=True, nullable=True)
     type_id = Column(ForeignKey("eventtypes.id"), index=True)
-    type = relationship("EventTypeModel", back_populates="events")
+    # type = relationship("EventTypeModel", back_populates="events")
+    type = relationship("EventTypeModel", viewonly=True)
+    presences = relationship("PresenceModel", viewonly=True)
 
 class EventTypeModel(BaseModel):
     __tablename__ = "eventtypes"
+
+    id = UUIDColumn()
+    name = Column(String)
+    name_en = Column(String)
+
+    category_id = Column(ForeignKey("eventcategories.id"), index=True)
+
+    created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
+    createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
+    rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
+
+    events = relationship("EventModel", back_populates="type")
+
+class EventCategoryModel(BaseModel):
+    __tablename__ = "eventcategories"
 
     id = UUIDColumn()
     name = Column(String)
@@ -70,7 +89,7 @@ class EventTypeModel(BaseModel):
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
 
-    events = relationship("EventModel", back_populates="type")
+    eventtypes = relationship("EventTypeModel", viewonly=True)
 
 class EventGroupModel(BaseModel):
     __tablename__ = "events_groups"
@@ -107,6 +126,10 @@ class PresenceModel(BaseModel):
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     changedby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
     rbacobject = UUIDFKey(nullable=True, comment="id rbacobject")#Column(ForeignKey("users.id"), index=True, nullable=True)
+
+    presence_type = relationship("PresenceTypeModel", viewonly=True)
+    invitation_type = relationship("InvitationTypeModel", viewonly=True)
+    event = relationship("EventModel", viewonly=True)
 
 class PresenceTypeModel(BaseModel):
     __tablename__ = "eventpresencetypes"
@@ -186,5 +209,6 @@ def ComposeConnectionString():
 
     driver = "postgresql+asyncpg"  # "postgresql+psycopg2"
     connectionstring = f"{driver}://{user}:{password}@{hostWithPort}/{database}"
+    connectionstring = os.environ.get("CONNECTION_STRING", connectionstring)
 
     return connectionstring
