@@ -359,6 +359,7 @@ async def event_type_by_id(self, info: strawberry.types.Info, id: IDType) -> Opt
 @createInputs
 @dataclass
 class PresenceTypeInputFilter:
+    id: IDType
     name: str
     name_en: str
 
@@ -389,6 +390,7 @@ async def presence_type_by_id(self, info: strawberry.types.Info, id: IDType) -> 
 @createInputs
 @dataclass
 class InvitationTypeInputFilter:
+    id: IDType
     name: str
     name_en: str
 
@@ -413,45 +415,16 @@ async def invitation_type_by_id(self, info: strawberry.types.Info, id: IDType) -
     return await InvitationTypeGQLModel.resolve_reference(info=info, id=id)
 # endregion
 
-# region Event Model
-
-@createInputs
-@dataclass
-class EventInputFilter:
-    name: str
-    name_en: str
-    startdate: datetime.datetime
-    enddate: datetime.datetime
-    type_id: IDType
-
-@strawberry.field(
-    description="""Finds all events paged""",
-    permission_classes=[
-        OnlyForAuthentized,
-        # OnlyForAdmins
-    ]
-    )
-@asPage
-async def event_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[EventInputFilter] = None) -> List["EventGQLModel"]:
-    return EventGQLModel.getLoader(info)
-
-@strawberry.field(
-    description="""Gets event by id""",
-    permission_classes=[
-        OnlyForAuthentized,
-        # OnlyForAdmins
-    ]
-    )
-async def event_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["EventGQLModel"]:
-    return await EventGQLModel.resolve_reference(info=info, id=id)
-# endregion
-
 # region Presence Model
 @createInputs
 @dataclass
 class PresenceInputFilter:
     name: str
     name_en: str
+    user_id: IDType
+    presence_type: PresenceTypeInputFilter
+    invitation_type: InvitationTypeInputFilter
+
 
 @strawberry.field(
     description="""Finds all events paged""",
@@ -474,6 +447,43 @@ async def presence_page(self, info: strawberry.types.Info, skip: Optional[int] =
 async def presence_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["PresenceGQLModel"]:
     return await PresenceGQLModel.resolve_reference(info=info, id=id)
 
+# endregion
+
+# region Event Model
+
+@createInputs
+@dataclass
+class EventInputFilter:
+    type_id: IDType
+    masterevent_id: IDType
+    name: str
+    name_en: str
+    startdate: datetime.datetime
+    enddate: datetime.datetime
+    type: EventTypeInputFilter
+    presences: PresenceInputFilter
+    
+
+@strawberry.field(
+    description="""Finds all events paged""",
+    permission_classes=[
+        OnlyForAuthentized,
+        # OnlyForAdmins
+    ]
+    )
+@asPage
+async def event_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[EventInputFilter] = None) -> List["EventGQLModel"]:
+    return EventGQLModel.getLoader(info)
+
+@strawberry.field(
+    description="""Gets event by id""",
+    permission_classes=[
+        OnlyForAuthentized,
+        # OnlyForAdmins
+    ]
+    )
+async def event_by_id(self, info: strawberry.types.Info, id: IDType) -> Optional["EventGQLModel"]:
+    return await EventGQLModel.resolve_reference(info=info, id=id)
 # endregion
 ###########################################################################################################################
 #

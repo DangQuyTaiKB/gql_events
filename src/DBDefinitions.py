@@ -55,7 +55,9 @@ class EventModel(BaseModel):
 
     masterevent_id = Column(ForeignKey("events.id"), index=True, nullable=True)
     type_id = Column(ForeignKey("eventtypes.id"), index=True)
-    type = relationship("EventTypeModel", back_populates="events")
+    # type = relationship("EventTypeModel", back_populates="events")
+    type = relationship("EventTypeModel", viewonly=True)
+    presences = relationship("PresenceModel", viewonly=True)
 
 class EventTypeModel(BaseModel):
     __tablename__ = "eventtypes"
@@ -206,5 +208,6 @@ def ComposeConnectionString():
 
     driver = "postgresql+asyncpg"  # "postgresql+psycopg2"
     connectionstring = f"{driver}://{user}:{password}@{hostWithPort}/{database}"
+    connectionstring = os.environ.get("CONNECTION_STRING", connectionstring)
 
     return connectionstring
