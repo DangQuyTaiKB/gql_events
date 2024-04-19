@@ -2,7 +2,7 @@ import strawberry
 import dataclasses
 import datetime
 
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from ._GraphResolvers import getLoadersFromInfo, IDType
 from uoishelpers.resolvers import createInputs
 
@@ -10,7 +10,7 @@ from uoishelpers.resolvers import createInputs
 async def resolve_reference(cls, info: strawberry.types.Info, id: IDType):
     return cls(id=id)
 
-from .GraphTypeDefinitions import EventGQLModel
+from .GraphTypeDefinitions import EventGQLModel, PresenceGQLModel
 from .GraphResolvers import (
     
     create_statement_for_user_events2, 
@@ -35,10 +35,14 @@ class UGEventInputFilter:
     # from .GraphTypeDefinitions import EventTypeWhereFilter
     # eventtype: EventTypeWhereFilter
 
+PresenceInputFilter = Annotated["PresenceInputFilter", strawberry.lazy(".GraphTypeDefinitions")]
+
 @strawberry.federation.type(extend=True, keys=["id"])
 class UserGQLModel:
     id: IDType = strawberry.federation.field(external=True)
     resolve_reference = resolve_reference
+
+    from .GraphTypeDefinitions import PresenceInputFilter
 
     @strawberry.field(description="""events of the user""")
     async def events(
@@ -54,6 +58,22 @@ class UserGQLModel:
         loader = getLoadersFromInfo(info).events
         result = await loader.execute_select(statement)
         return result
+    
+    @strawberry.field(description="""presences of the user""")
+    async def presences(
+        self,
+        info: strawberry.types.Info,
+        skip: Optional[int] = 0,
+        limit: Optional[int] = 10,
+        where: Optional[PresenceInputFilter] = None
+    ) -> List["PresenceGQLModel"]:
+        from .GraphTypeDefinitions import PresenceGQLModel
+        loader = PresenceGQLModel.getLoader(info)
+
+        wheredict = None if where is None else strawberry.asdict(where)
+        rows = await loader.page(skip=skip, limit=limit, where=wheredict, extendedfilter={"user_id": self.id})
+        return rows
+
 
 @strawberry.federation.type(extend=True, keys=["id"])
 class GroupGQLModel:

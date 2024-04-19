@@ -93,7 +93,7 @@ class PresenceGQLModel:
             OnlyForAuthentized,
             # OnlyForAdmins
         ])
-    async def user(self, info: strawberry.types.Info) -> Optional['UserGQLModel']:
+    async def user(self, info: strawberry.types.Info) -> Optional["UserGQLModel"]:
         from .GraphTypeDefinitionsExt import UserGQLModel
         result = await UserGQLModel.resolve_reference(info, id=self.user_id)
         return result
@@ -416,6 +416,8 @@ async def invitation_type_by_id(self, info: strawberry.types.Info, id: IDType) -
 # endregion
 
 # region Presence Model
+
+EventInputFilter_ = Annotated["EventInputFilter", strawberry.lazy(".GraphTypeDefinitions")]
 @createInputs
 @dataclass
 class PresenceInputFilter:
@@ -424,6 +426,7 @@ class PresenceInputFilter:
     user_id: IDType
     presence_type: PresenceTypeInputFilter
     invitation_type: InvitationTypeInputFilter
+    event: EventInputFilter_
 
 
 @strawberry.field(

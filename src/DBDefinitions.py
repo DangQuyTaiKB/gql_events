@@ -129,6 +129,7 @@ class PresenceModel(BaseModel):
 
     presence_type = relationship("PresenceTypeModel", viewonly=True)
     invitation_type = relationship("InvitationTypeModel", viewonly=True)
+    event = relationship("EventModel", viewonly=True)
 
 class PresenceTypeModel(BaseModel):
     __tablename__ = "eventpresencetypes"
