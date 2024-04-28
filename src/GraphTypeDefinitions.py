@@ -10,6 +10,7 @@ from dataclasses import dataclass
 #
 ###########################################################################################################################
 import datetime
+from enum import Enum
 from src.GraphResolvers import resolveEventsForUser
 from ._GraphPermissions import (
     OnlyForAuthentized,
@@ -109,6 +110,7 @@ class PresenceGQLModel:
 # endregion
 
 # region EventType Model
+
 @strawberry.federation.type(keys=["id"], description="""Represents an event type""")
 class EventTypeGQLModel:
 
@@ -194,6 +196,15 @@ from src.GraphResolvers import (
 # endregion
 
 # region Event Model
+
+@strawberry.enum(description="")
+class TimeUnit(Enum):
+    SECONDS = "seconds"
+    MINUTES = "minutes"
+    HOURS = "hours"
+    DAYS = "days"
+    WEEKS = "weeks"
+
 @strawberry.federation.type(keys=["id"], description="""Entity representing an event (calendar item)""")
 class EventGQLModel:
 
@@ -211,6 +222,27 @@ class EventGQLModel:
     created = resolve_created
     createdby = resolve_createdby
     changedby = resolve_changedby
+
+    @strawberry.field(
+        description="""Event duration, implicitly in minutes""",
+        permission_classes=[
+            OnlyForAuthentized,
+            # OnlyForAdmins
+        ])
+    def duration(self, unit: TimeUnit=TimeUnit.MINUTES) -> Optional[float]:
+        result = self.duration
+        if unit == TimeUnit.SECONDS:
+            return result * 24 * 60 * 60
+        if unit == TimeUnit.MINUTES:
+            return result * 24 * 60
+        if unit == TimeUnit.HOURS:
+            return result * 24
+        if unit == TimeUnit.DAYS:
+            return result
+        if unit == TimeUnit.WEEKS:
+            return result / 7
+        raise Exception("Unknown unit for duration")
+        
 
     @strawberry.field(
         description="""Event description""",
@@ -461,6 +493,7 @@ class EventInputFilter:
     masterevent_id: IDType
     name: str
     name_en: str
+    # duration: float # SELECT Problem :(
     startdate: datetime.datetime
     enddate: datetime.datetime
     type: EventTypeInputFilter

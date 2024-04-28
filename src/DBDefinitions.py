@@ -14,7 +14,8 @@ from sqlalchemy import (
     Table,
     Boolean,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.hybrid import hybrid_property
+# from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import declarative_base
 from .UUID import UUIDColumn, UUIDFKey
@@ -47,6 +48,10 @@ class EventModel(BaseModel):
     place = Column(String)
     place_id = UUIDFKey(nullable=True)
 
+    @hybrid_property
+    def duration(self):
+        return (self.enddate - self.startdate)#.total_seconds() / 60
+    
     created = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     lastchange = Column(DateTime, server_default=sqlalchemy.sql.func.now())
     createdby = UUIDFKey(nullable=True)#Column(ForeignKey("users.id"), index=True, nullable=True)
