@@ -564,10 +564,12 @@ class EventInsertGQLModel:
     type_id: IDType
     id: Optional[IDType] = None
     masterevent_id: Optional[IDType] = None
+    place: Optional[str] = None
+    place_id: Optional[IDType] = None
     startdate: Optional[datetime.datetime] = \
         strawberry.field(description="start date of event", default_factory=lambda: datetime.datetime.now())
     enddate: Optional[datetime.datetime] = \
-        strawberry.field(description="end date of event", default_factory=lambda:datetime.datetime.now() + datetime.timedelta(minutes = 30))    
+        strawberry.field(description="end date of event", default_factory=lambda:(datetime.datetime.now() + datetime.timedelta(minutes = 30)) )
     createdby: strawberry.Private[IDType] = None
     rbacobject: strawberry.Private[IDType] = None
 
@@ -579,17 +581,19 @@ class EventUpdateGQLModel:
     name: Optional[str] = None
     masterevent_id: Optional[IDType] = None
     type_id: Optional[IDType] = None
+    place: Optional[str] = None
+    place_id: Optional[IDType] = None    
     startdate: Optional[datetime.datetime] = None
     enddate: Optional[datetime.datetime] = None
     changedby: strawberry.Private[IDType] = None
     rbacobject: strawberry.Private[IDType] = None
     
-@strawberry.type(description="""Result of user operation""")
+@strawberry.type(description="""Result of event operation""")
 class EventResultGQLModel:
     id: IDType = None
     msg: str = None
 
-    @strawberry.field(description="""Result of user operation""")
+    @strawberry.field(description="""Result of event operation""")
     async def event(self, info: strawberry.types.Info) -> Optional[EventGQLModel]:
         result = await EventGQLModel.resolve_reference(info, self.id)
         return result

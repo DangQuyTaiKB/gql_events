@@ -850,7 +850,9 @@
             
             "startdate": "2023-01-01T00:00:00", 
             "enddate": "2023-12-31T23:59:59",
-            "_chunk": 2
+            "_chunk": 2,
+            "createdby": "2d9dc5ca-a4a2-11ed-b9df-0242ac120003",
+            "changedby": "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
         },
 
         {
