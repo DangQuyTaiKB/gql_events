@@ -230,17 +230,17 @@ class EventGQLModel:
             # OnlyForAdmins
         ])
     def duration(self, unit: TimeUnit=TimeUnit.MINUTES) -> Optional[float]:
-        result = self.duration
+        result = self.duration.total_seconds()
         if unit == TimeUnit.SECONDS:
-            return result * 24 * 60 * 60
-        if unit == TimeUnit.MINUTES:
-            return result * 24 * 60
-        if unit == TimeUnit.HOURS:
-            return result * 24
-        if unit == TimeUnit.DAYS:
             return result
+        if unit == TimeUnit.MINUTES:
+            return result / 60
+        if unit == TimeUnit.HOURS:
+            return result / 60 / 60
+        if unit == TimeUnit.DAYS:
+            return result / 60 / 60 / 24
         if unit == TimeUnit.WEEKS:
-            return result / 7
+            return result / 60 / 60 / 24 / 7
         raise Exception("Unknown unit for duration")
         
 
@@ -920,7 +920,7 @@ async def event_user_delete(self, info: strawberry.types.Info, event_user: Event
     result = EventResultGQLModel(id=event_user.event_id, msg="ok")
     result.msg = "ok" if row is not None else "fail"
     if row is not None:
-        await loader.delete(row)
+        await loader.delete(row.id)
     return result
 
 # endregion
