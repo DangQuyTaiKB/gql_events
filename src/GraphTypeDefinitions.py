@@ -969,7 +969,7 @@ async def event_group_delete(self, info: strawberry.types.Info, event_group: Eve
     result = EventResultGQLModel(id=event_group.event_id, msg="ok")
     result.msg = "ok" if row is not None else "fail"
     if row is not None:
-        await loader.delete(row)
+        await loader.delete(row.id)
     return result
 
 # endregion
