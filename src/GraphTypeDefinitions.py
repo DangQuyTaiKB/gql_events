@@ -494,6 +494,7 @@ class EventInputFilter:
     name: str
     name_en: str
     # duration: float # SELECT Problem :(
+    duration: datetime.timedelta
     startdate: datetime.datetime
     enddate: datetime.datetime
     type: EventTypeInputFilter
@@ -929,6 +930,7 @@ async def event_user_delete(self, info: strawberry.types.Info, event_user: Event
 
 @strawberry.input(description="First datastructure for invitation type creation")
 class EventGroupInputGQLModel:
+    id: Optional[IDType] = None
     event_id: IDType
     group_id: IDType
     createdby: strawberry.Private[IDType] = None
@@ -937,8 +939,11 @@ class EventGroupInputGQLModel:
 
 @strawberry.input(description="Datastructure for invitation type update")
 class EventGroupDeleteGQLModel:
+    # id: IDType
     event_id: IDType
     group_id: IDType
+    createdby: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
 
 @strawberry.mutation(
     description="creates new presence type",
@@ -1011,6 +1016,22 @@ class Mutation:
     # pass
 
 # endregion    
+
+###########################################################################################################################
+# 
+# Custom scalar
+# https://strawberry.rocks/docs/types/scalars#custom-scalars
+# 
+###########################################################################################################################
+
+timedelta = strawberry.scalar(
+    # NewType("TimeDelta", float),
+    datetime.timedelta,
+    name="timedelta",
+    serialize=lambda v: v.total_seconds() / 60,
+    parse_value=lambda v: datetime.timedelta(minutes=v),
+)
+
 ###########################################################################################################################
 #
 # Schema je pouzito v main.py, vsimnete si parametru types, obsahuje vyjmenovane modely. Bez explicitniho vyjmenovani
@@ -1021,5 +1042,10 @@ class Mutation:
 ###########################################################################################################################
 
 from .GraphTypeDefinitionsExt import UserGQLModel
-schema = strawberry.federation.Schema(Query, types=(UserGQLModel,), mutation=Mutation)
+schema = strawberry.federation.Schema(
+    Query, 
+    types=(UserGQLModel,), 
+    mutation=Mutation,
+    scalar_overrides={datetime.timedelta: timedelta._scalar_definition}
+    )
 #schema = strawberry.federation.Schema(Query, types=(UserGQLModel,))
