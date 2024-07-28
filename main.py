@@ -1,6 +1,7 @@
 import os
 import strawberry
 import socket
+import asyncio
 
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
@@ -71,7 +72,8 @@ async def RunOnceAndReturnSessionMaker():
     Protoze je dekorovana, volani teto funkce se provede jen jednou a vystup se zapamatuje a vraci se pri dalsich volanich.
     """
 
-    makeDrop = os.getenv("DEMO", None) == "True"
+    # makeDrop = os.getenv("DEMO", None) == "True"
+    makeDrop = False
     logging.info(f'starting engine for "{connectionString} makeDrop={makeDrop}"')
 
     result = await startEngine(
@@ -84,7 +86,9 @@ async def RunOnceAndReturnSessionMaker():
     #
     # zde definujte do funkce asyncio.gather
     # vlozte asynchronni funkce, ktere maji data uvest do prvotniho konzistentniho stavu
-    await initDB(result)
+    
+    # await initDB(result)
+    asyncio.create_task(initDB(result))
     #
     #
     ###########################################################################################################################

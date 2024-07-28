@@ -4,6 +4,9 @@ import datetime
 import pytest_asyncio
 import uuid
 
+
+from .gt_utils import getQuery
+
 queries = {
     "eventtypes": {
         "read": """query($id: UUID!){ result: eventTypeById(id: $id) { id } }""",
@@ -150,7 +153,18 @@ queries = {
 }
 
 @pytest_asyncio.fixture
-async def GQLInsertQueries():  
+async def GQLInsertQueries(DBModels):  
+    queries = {}
+    for DBModel in DBModels:
+        tablename = DBModel.__tablename__
+        queryset = {"read": "", "ext": "", "create": ""}
+        queries[tablename] = queryset
+        queryRead = getQuery(tableName=tablename, queryName="read")
+        queryCreate = getQuery(tableName=tablename, queryName="create")
+        queryset["read"] = queryRead
+        queryset["readext"] = queryRead
+        queryset["create"] = queryCreate
+
     return queries
 
 

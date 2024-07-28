@@ -9,16 +9,23 @@ from dataclasses import dataclass
 # - rozsirene, ktere existuji nekde jinde a vy jim pridavate dalsi atributy
 #
 ###########################################################################################################################
+import json
 import datetime
 from enum import Enum
-from src.GraphResolvers import resolveEventsForUser
-from ._GraphPermissions import (
+
+import strawberry.types
+from uoishelpers.resolvers import getLoadersFromInfo
+# from src.GraphResolvers import resolveEventsForUser
+from src.GraphResolvers import create_statement_for_event_presences
+from .GraphPermissions import (
     OnlyForAuthentized,
-    OnlyForAdmins
+    OnlyForAdmins,
+    RoleBasedPermission
+    # RBACPermission
 )
 
-from ._GraphResolvers import (
-    getLoadersFromInfo,
+from .GraphResolvers import (
+    # getLoadersFromInfo,
     
     IDType,
 
@@ -31,18 +38,44 @@ from ._GraphResolvers import (
     resolve_createdby,
     resolve_changedby,
 
-    asPage,
+    # asPage,
     
+    # encapsulateInsert,
+    # encapsulateUpdate,
+    # encapsulateDelete
+    )
+
+
+from uoishelpers.resolvers import (
     encapsulateInsert,
     encapsulateUpdate,
     encapsulateDelete
-    )
+)
 
-from src.DBResolvers import DBResolvers
+from uoishelpers.gqlpermissions import (
+    RBACObjectGQLModel
+)
+
+# from src.DBResolvers import DBResolvers
+from src.DBResolvers import (
+    EventModelResolvers,
+    EventTypeModelResolvers,
+    EventCategoryModelResolvers,
+    EventGroupModelResolvers,
+
+    PresenceModelResolvers,
+    PresenceTypeModelResolvers,
+
+    InvitationTypeModelResolvers
+)
 
 GroupGQLModel = Annotated["GroupGQLModel", strawberry.lazy(".GraphTypeDefinitionsExt")]
 UserGQLModel = Annotated["UserGQLModel", strawberry.lazy(".GraphTypeDefinitionsExt")]
+# RBACObjectGQLModel = Annotated["RBACObjectGQLModel", strawberry.lazy(".GraphTypeDefinitionsExt")]
 PresenceTypeGQLModel = Annotated["PresenceTypeGQLModel", strawberry.lazy(".GraphTypeDefinitions")]
+
+EventInputFilter_ = Annotated["EventInputFilter", strawberry.lazy(".GraphTypeDefinitions")]
+EventGQLModel_ = Annotated["EventGQLModel", strawberry.lazy(".GraphTypeDefinitions")]
 
 # region Presence Model
 @strawberry.federation.type(keys=["id"], description="""Describes a relation of an user to the event by invitation (like invited) and participation (like absent)""")
@@ -71,14 +104,14 @@ class PresenceGQLModel:
         result = await PresenceTypeGQLModel.resolve_reference(info, self.presencetype_id)
         return result
     
-    presence_type2 = strawberry.field(
-        description="""Present, Vacation etc.""",
-        permission_classes=[
-            OnlyForAuthentized,
-            # OnlyForAdmins
-        ],
-        resolver=DBResolvers.PresenceModel.presence_type(PresenceTypeGQLModel)
-    )
+    # presence_type2 = strawberry.field(
+    #     description="""Present, Vacation etc.""",
+    #     permission_classes=[
+    #         OnlyForAuthentized,
+    #         # OnlyForAdmins
+    #     ],
+    #     resolver=DBResolvers.PresenceModel.presence_type(PresenceTypeGQLModel)
+    # )
 
     @strawberry.field(description="""Invited, Accepted, etc.""",
         permission_classes=[
@@ -130,16 +163,16 @@ class EventTypeGQLModel:
     createdby = resolve_createdby
     changedby = resolve_changedby
 
-    @strawberry.field(
-        description="""Related events""",
-        permission_classes=[
-            OnlyForAuthentized,
-            # OnlyForAdmins
-        ])
-    async def events(self, info: strawberry.types.Info) -> List['EventGQLModel']:
-        loader = EventGQLModel.getLoader(info)
-        result = await loader.filter_by(type_id=self.id)
-        return result
+    # @strawberry.field(
+    #     description="""Related events""",
+    #     permission_classes=[
+    #         OnlyForAuthentized,
+    #         # OnlyForAdmins
+    #     ])
+    # async def events(self, info: strawberry.types.Info) -> List['EventGQLModel']:
+    #     loader = EventGQLModel.getLoader(info)
+    #     result = await loader.filter_by(type_id=self.id)
+    #     return result
 # endregion
 
 # region PresenceType Model
@@ -183,15 +216,15 @@ class InvitationTypeGQLModel:
     changedby = resolve_changedby
 
 
-from src.GraphResolvers import resolveEventsForGroup
+# from src.GraphResolvers import resolveEventsForGroup
 
 
 import datetime
-from src.GraphResolvers import (
-    resolveEventById,
-    resolveGroupsForEvent,
-    resolvePresencesForEvent
-)
+# from src.GraphResolvers import (
+#     resolveEventById,
+#     resolveGroupsForEvent,
+#     resolvePresencesForEvent
+# )
 
 # endregion
 
@@ -205,6 +238,7 @@ class TimeUnit(Enum):
     DAYS = "days"
     WEEKS = "weeks"
 
+PresenceInputFilter_ = Annotated["PresenceInputFilter", strawberry.lazy(".GraphTypeDefinitions")]
 @strawberry.federation.type(keys=["id"], description="""Entity representing an event (calendar item)""")
 class EventGQLModel:
 
@@ -241,8 +275,20 @@ class EventGQLModel:
             return result / 60 / 60 / 24
         if unit == TimeUnit.WEEKS:
             return result / 60 / 60 / 24 / 7
-        raise Exception("Unknown unit for duration")
+        # raise Exception("Unknown unit for duration")
         
+    @strawberry.field(
+        description="""
+        If teaching hour, rbacobject is group where (first) teacher belongs to
+        If personal event, rbacobject is user who created event
+        """,
+        permission_classes=[
+            OnlyForAuthentized,
+            # OnlyForAdmins
+        ])
+    async def rbac(self, info: strawberry.types.Info) -> Optional[RBACObjectGQLModel]:
+        from .GraphTypeDefinitionsExt import RBACObjectGQLModel
+        return await RBACObjectGQLModel.resolve_reference(info=info, id=self.rbacobject)
 
     @strawberry.field(
         description="""Event description""",
@@ -301,17 +347,45 @@ class EventGQLModel:
         rows = await loader.filter_by(event_id=self.id)
         return map(lambda row: GroupGQLModel(id=row.group_id), rows)           
 
+    
     @strawberry.field(
-        description="""Participants of the event and if they were absent or so...""",
+        description="""Users linked to the event""",
         permission_classes=[
             OnlyForAuthentized,
             # OnlyForAdmins
         ])
-    async def presences(self, info: strawberry.types.Info) -> List["PresenceGQLModel"]:
-        # loader = getLoadersFromInfo(info).presences
-        loader = PresenceGQLModel.getLoader(info)
-        result = await loader.filter_by(event_id=self.id)
-        return result
+    async def users(self, info: strawberry.types.Info, where: Optional[PresenceInputFilter_]=None) -> List["UserGQLModel"]:
+        wheredict = None if where is None else strawberry.asdict(where)
+        from .GraphTypeDefinitionsExt import UserGQLModel
+        loader = getLoadersFromInfo(info).events_users
+        statement = create_statement_for_event_presences(id=self.id, where=wheredict)
+        rows = await loader.execute_select(statement)
+        return map(lambda row: UserGQLModel(id=row.user_id), rows)           
+        pass
+    # @strawberry.field(
+    #     description="""Participants of the event and if they were absent or so...""",
+    #     permission_classes=[
+    #         OnlyForAuthentized,
+    #         # OnlyForAdmins
+    #     ])
+    # async def presences(self, info: strawberry.types.Info) -> List["PresenceGQLModel"]:
+    #     # loader = getLoadersFromInfo(info).presences
+    #     loader = PresenceGQLModel.getLoader(info)
+    #     result = await loader.filter_by(event_id=self.id)
+    #     return result
+    
+    presences = strawberry.field(
+        description="""Participants of the event and if they were absent or so...""",
+        resolver=EventModelResolvers.Vector(
+            "presences", 
+            GQLModel=PresenceGQLModel,
+            WhereFilterModel=PresenceInputFilter_
+            ),
+        permission_classes=[
+            OnlyForAuthentized,
+            # OnlyForAdmins
+        ]        
+    )
 
     @strawberry.field(
         description="""Type of the event""",
@@ -335,17 +409,46 @@ class EventGQLModel:
             result = await EventGQLModel.resolve_reference(info=info, id=self.masterevent_id)
         return result
 
-    @strawberry.field(
+    # @strawberry.field(
+    #     description="""""",
+    #     permission_classes=[
+    #         OnlyForAuthentized,
+    #         # OnlyForAdmins
+    #     ])
+    # async def rbactest(self, info: strawberry.types.Info) -> Optional[strawberry.scalars.JSON]:
+    #     # RBACPermission.getActiveRoles()
+    #     result = await RBACPermission().getActiveRoles(self.rbacobject, info=info) if self.rbacobject else {}
+    #     # resultstr = json.dumps(result, ensure_ascii=False, default=str)
+    #     # result = json.loads(resultstr)
+    #     # print(result, flush=True)
+    #     return result
+
+
+    # @strawberry.field(
+    #     description="""events which are contained by this event (aka all lessons for the semester)""",
+    #     permission_classes=[
+    #         OnlyForAuthentized,
+    #         # OnlyForAdmins
+    #     ])
+    # async def sub_events(self, info: strawberry.types.Info) -> List["EventGQLModel"]:
+    #     # loader = getLoadersFromInfo(info).events
+    #     loader = EventGQLModel.getLoader(info)
+    #     result = await loader.filter_by(masterevent_id=self.id)
+    #     return result
+    
+    sub_events = strawberry.field(
         description="""events which are contained by this event (aka all lessons for the semester)""",
+        resolver=EventModelResolvers.Vector(
+            "sub_events",
+            GQLModel=EventGQLModel_,
+            WhereFilterModel=EventInputFilter_
+            ),
         permission_classes=[
             OnlyForAuthentized,
             # OnlyForAdmins
         ])
-    async def sub_events(self, info: strawberry.types.Info) -> List["EventGQLModel"]:
-        # loader = getLoadersFromInfo(info).events
-        loader = EventGQLModel.getLoader(info)
-        result = await loader.filter_by(masterevent_id=self.id)
-        return result
+    
+
 # endregion
 
 
@@ -365,16 +468,28 @@ class EventTypeInputFilter:
     name: str
     name_en: str
 
-@strawberry.field(
+# @strawberry.field(
+#     description="""Finds all types of events paged""",
+#     permission_classes=[
+#         OnlyForAuthentized,
+#         # OnlyForAdmins
+#     ]
+#     )
+# @asPage
+# async def event_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[EventTypeInputFilter] = None) -> List["EventTypeGQLModel"]:
+#     return EventTypeGQLModel.getLoader(info)
+
+event_type_page = strawberry.field(
     description="""Finds all types of events paged""",
+    resolver=EventTypeModelResolvers.Page(
+        GQLModel=EventTypeGQLModel,
+        WhereFilterModel=EventTypeInputFilter
+    ),
     permission_classes=[
         OnlyForAuthentized,
         # OnlyForAdmins
     ]
     )
-@asPage
-async def event_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[EventTypeInputFilter] = None) -> List["EventTypeGQLModel"]:
-    return EventTypeGQLModel.getLoader(info)
 
 @strawberry.field(
     description="""Gets type of event by id""",
@@ -395,16 +510,28 @@ class PresenceTypeInputFilter:
     name: str
     name_en: str
 
-@strawberry.field(
+# @strawberry.field(
+#     description="""Finds all types of presences paged""",
+#     permission_classes=[
+#         OnlyForAuthentized,
+#         # OnlyForAdmins
+#     ]
+#     )
+# @asPage
+# async def presence_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[PresenceTypeInputFilter] = None) -> List["PresenceTypeGQLModel"]:
+#     return PresenceTypeGQLModel.getLoader(info)
+
+presence_type_page = strawberry.field(
     description="""Finds all types of presences paged""",
+    resolver = PresenceTypeModelResolvers.Page(
+        GQLModel=PresenceTypeGQLModel,
+        WhereFilterModel=PresenceTypeInputFilter
+    ),
     permission_classes=[
         OnlyForAuthentized,
         # OnlyForAdmins
     ]
     )
-@asPage
-async def presence_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[PresenceTypeInputFilter] = None) -> List["PresenceTypeGQLModel"]:
-    return PresenceTypeGQLModel.getLoader(info)
 
 @strawberry.field(
     description="""Gets type of presence by id""",
@@ -426,16 +553,28 @@ class InvitationTypeInputFilter:
     name: str
     name_en: str
 
-@strawberry.field(
+# @strawberry.field(
+#     description="""Finds all types of invitation paged""",
+#     permission_classes=[
+#         OnlyForAuthentized,
+#         # OnlyForAdmins
+#     ]
+#     )
+# @asPage
+# async def invitation_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[InvitationTypeInputFilter] = None) -> List["InvitationTypeGQLModel"]:
+#     return InvitationTypeGQLModel.getLoader(info)
+
+invitation_type_page = strawberry.field(
     description="""Finds all types of invitation paged""",
+    resolver=InvitationTypeModelResolvers.Page(
+        GQLModel=InvitationTypeGQLModel,
+        WhereFilterModel=InvitationTypeInputFilter
+    ),
     permission_classes=[
         OnlyForAuthentized,
         # OnlyForAdmins
     ]
     )
-@asPage
-async def invitation_type_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[InvitationTypeInputFilter] = None) -> List["InvitationTypeGQLModel"]:
-    return InvitationTypeGQLModel.getLoader(info)
 
 @strawberry.field(
     description="""Gets type of invitation by id""",
@@ -449,7 +588,6 @@ async def invitation_type_by_id(self, info: strawberry.types.Info, id: IDType) -
 
 # region Presence Model
 
-EventInputFilter_ = Annotated["EventInputFilter", strawberry.lazy(".GraphTypeDefinitions")]
 @createInputs
 @dataclass
 class PresenceInputFilter:
@@ -461,19 +599,31 @@ class PresenceInputFilter:
     event: EventInputFilter_
 
 
-@strawberry.field(
-    description="""Finds all events paged""",
+# @strawberry.field(
+#     description="""Finds all events paged""",
+#     permission_classes=[
+#         OnlyForAuthentized,
+#         # OnlyForAdmins
+#     ]
+#     )
+# @asPage
+# async def presence_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[PresenceInputFilter] = None) -> List["PresenceGQLModel"]:
+#     return PresenceGQLModel.getLoader(info)
+
+
+presence_page = strawberry.field(
+    description="""Finds all presences paged""",
     permission_classes=[
         OnlyForAuthentized,
         # OnlyForAdmins
-    ]
+    ],
+    resolver=PresenceModelResolvers.Page(
+        GQLModel=PresenceGQLModel, 
+        WhereFilterModel=PresenceInputFilter)
     )
-@asPage
-async def presence_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[PresenceInputFilter] = None) -> List["PresenceGQLModel"]:
-    return PresenceGQLModel.getLoader(info)
 
 @strawberry.field(
-    description="""Finds all events paged""",
+    description="""Finds presence by id""",
     permission_classes=[
         OnlyForAuthentized,
         # OnlyForAdmins
@@ -501,16 +651,28 @@ class EventInputFilter:
     presences: PresenceInputFilter
     
 
-@strawberry.field(
+# @strawberry.field(
+#     description="""Finds all events paged""",
+#     permission_classes=[
+#         OnlyForAuthentized,
+#         # OnlyForAdmins
+#     ]
+#     )
+# @asPage
+# async def event_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[EventInputFilter] = None) -> List["EventGQLModel"]:
+#     return EventGQLModel.getLoader(info)
+
+event_page = strawberry.field(
     description="""Finds all events paged""",
+    resolver=EventModelResolvers.Page(
+        GQLModel=EventGQLModel,
+        WhereFilterModel=EventInputFilter
+    ),
     permission_classes=[
         OnlyForAuthentized,
         # OnlyForAdmins
     ]
     )
-@asPage
-async def event_page(self, info: strawberry.types.Info, skip: Optional[int] = 0, limit: Optional[int] = 10, where: Optional[EventInputFilter] = None) -> List["EventGQLModel"]:
-    return EventGQLModel.getLoader(info)
 
 @strawberry.field(
     description="""Gets event by id""",
@@ -615,8 +777,9 @@ async def event_insert(self, info: strawberry.types.Info, event: EventInsertGQLM
     permission_classes=[
         OnlyForAuthentized,
         # OnlyForAdmins
+        RoleBasedPermission("administrátor")
     ])
-async def event_update(self, info: strawberry.types.Info, event: EventUpdateGQLModel) -> EventResultGQLModel:
+async def event_update(self, info: strawberry.types.Info, event: EventUpdateGQLModel) -> EventResultGQLModel:   
     return await encapsulateUpdate(info, EventGQLModel.getLoader(info), event, EventResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(
@@ -626,6 +789,7 @@ async def event_update(self, info: strawberry.types.Info, event: EventUpdateGQLM
         # OnlyForAdmins
     ])
 async def event_delete(self, info: strawberry.types.Info, id: IDType) -> EventResultGQLModel:
+    # result = await encapsulateDelete(info, EventGQLModel.getLoader(info), id, EventResultGQLModel(id=None, msg="ok"))
     return await encapsulateDelete(info, EventGQLModel.getLoader(info), id, EventResultGQLModel(id=None, msg="ok"))
 
 # endregion
@@ -701,6 +865,7 @@ class EventTypeInsertGQLModel:
 @strawberry.input(description="Datastructure for event type update")
 class EventTypeUpdateGQLModel:
     id: IDType
+    lastchange: datetime.datetime
     name: Optional[str] = None
     name_en: Optional[str] = None
     changedby: strawberry.Private[IDType] = None
@@ -757,6 +922,7 @@ class PresenceTypeInsertGQLModel:
 @strawberry.input(description="Datastructure for event type update")
 class PresenceTypeUpdateGQLModel:
     id: IDType
+    lastchange: datetime.datetime
     name: Optional[str] = None
     name_en: Optional[str] = None
     changedby: strawberry.Private[IDType] = None
@@ -813,6 +979,7 @@ class InvitationTypeInsertGQLModel:
 @strawberry.input(description="Datastructure for invitation type update")
 class InvitationTypeUpdateGQLModel:
     id: IDType
+    lastchange: datetime.datetime
     name: Optional[str] = None
     name_en: Optional[str] = None
     changedby: strawberry.Private[IDType] = None
@@ -860,7 +1027,7 @@ async def invitation_type_delete(self, info: strawberry.types.Info, id: IDType) 
 # region Event User
 
 @strawberry.input(description="First datastructure for invitation type creation")
-class EventUserInputGQLModel:
+class EventUserInsertGQLModel:
     event_id: IDType
     user_id: IDType
     invitationtype_id: IDType
@@ -872,6 +1039,7 @@ class EventUserInputGQLModel:
 @strawberry.input(description="Datastructure for invitation type update")
 class EventUserUpdateGQLModel:
     id: IDType
+    lastchange: datetime.datetime
     invitationtype_id: Optional[IDType] = None
     presencetype_id: Optional[IDType] = None
     changedby: strawberry.Private[IDType] = None
@@ -889,7 +1057,7 @@ class EventUserDeleteGQLModel:
         OnlyForAuthentized,
         # OnlyForAdmins
     ])
-async def event_user_insert(self, info: strawberry.types.Info, event_user: EventUserInputGQLModel) -> EventResultGQLModel:
+async def event_user_insert(self, info: strawberry.types.Info, event_user: EventUserInsertGQLModel) -> EventResultGQLModel:
     loader = PresenceGQLModel.getLoader(info)
     rows = await loader.filter_by(event_id=event_user.event_id, user_id=event_user.user_id)
     row = next(rows, None)
@@ -905,8 +1073,8 @@ async def event_user_insert(self, info: strawberry.types.Info, event_user: Event
         OnlyForAuthentized,
         # OnlyForAdmins
     ])
-async def event_user_update(self, info: strawberry.types.Info, event_user: EventUserInputGQLModel) -> EventResultGQLModel:
-    return await encapsulateUpdate(info, PresenceGQLModel.getLoader(info), event_user, EventResultGQLModel(id=event_user.event_id, msg="ok"))
+async def event_user_update(self, info: strawberry.types.Info, event_user: EventUserUpdateGQLModel) -> EventResultGQLModel:
+    return await encapsulateUpdate(info, PresenceGQLModel.getLoader(info), event_user, EventResultGQLModel(id=event_user.id, msg="ok"))
 
 @strawberry.mutation(
     description="deletes presence",
@@ -914,7 +1082,7 @@ async def event_user_update(self, info: strawberry.types.Info, event_user: Event
         OnlyForAuthentized,
         # OnlyForAdmins
     ])
-async def event_user_delete(self, info: strawberry.types.Info, event_user: EventUserInputGQLModel) -> EventResultGQLModel:
+async def event_user_delete(self, info: strawberry.types.Info, event_user: EventUserDeleteGQLModel) -> EventResultGQLModel:
     loader = PresenceGQLModel.getLoader(info)
     rows = await loader.filter_by(event_id=event_user.event_id, user_id=event_user.user_id)
     row = next(rows, None)
@@ -1041,10 +1209,10 @@ timedelta = strawberry.scalar(
 #
 ###########################################################################################################################
 
-from .GraphTypeDefinitionsExt import UserGQLModel
+from .GraphTypeDefinitionsExt import UserGQLModel, GroupGQLModel
 schema = strawberry.federation.Schema(
     Query, 
-    types=(UserGQLModel,), 
+    types=(UserGQLModel, GroupGQLModel), 
     mutation=Mutation,
     scalar_overrides={datetime.timedelta: timedelta._scalar_definition}
     )

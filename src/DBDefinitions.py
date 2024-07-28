@@ -63,6 +63,8 @@ class EventModel(BaseModel):
     # type = relationship("EventTypeModel", back_populates="events")
     type = relationship("EventTypeModel", viewonly=True)
     presences = relationship("PresenceModel", viewonly=True)
+    sub_events = relationship("EventModel", viewonly=True, uselist=True)
+    master_event = relationship("EventModel", viewonly=True, uselist=False)
 
 class EventTypeModel(BaseModel):
     __tablename__ = "eventtypes"

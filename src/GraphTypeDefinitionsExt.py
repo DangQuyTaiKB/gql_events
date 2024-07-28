@@ -3,12 +3,12 @@ import dataclasses
 import datetime
 
 from typing import List, Optional, Annotated
-from ._GraphResolvers import getLoadersFromInfo, IDType
-from uoishelpers.resolvers import createInputs
+from .GraphResolvers import IDType
+from uoishelpers.resolvers import createInputs, getLoadersFromInfo
 
 @classmethod
 async def resolve_reference(cls, info: strawberry.types.Info, id: IDType):
-    return cls(id=id)
+    return None if id is None else cls(id=id) 
 
 from .GraphTypeDefinitions import EventGQLModel, PresenceGQLModel
 from .GraphResolvers import (
@@ -95,18 +95,4 @@ class GroupGQLModel:
         result = await loader.execute_select(statement)
         return result
 
-
-@strawberry.federation.type(extend=True, keys=["id"])
-class RBACObjectGQLModel:
-    id: IDType = strawberry.federation.field(external=True)
-    resolve_reference = resolve_reference
-
-    @classmethod
-    async def resolve_roles(cls, info: strawberry.types.Info, id: IDType):
-        loader = getLoadersFromInfo(info).authorizations
-        authorizedroles = await loader.load(id)
-        return authorizedroles
-
-    @classmethod
-    async def resolve_all_roles(cls, info: strawberry.types.Info):
-        return []
+from uoishelpers.gqlpermissions import RBACObjectGQLModel
