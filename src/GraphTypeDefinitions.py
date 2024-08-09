@@ -18,10 +18,13 @@ from uoishelpers.resolvers import getLoadersFromInfo
 # from src.GraphResolvers import resolveEventsForUser
 from src.GraphResolvers import create_statement_for_event_presences
 from .GraphPermissions import (
-    OnlyForAuthentized,
-    OnlyForAdmins,
-    RoleBasedPermission
+    
+    OnlyForAdmins,    
     # RBACPermission
+)
+from uoishelpers.gqlpermissions import (
+    OnlyForAuthentized,
+    RoleBasedPermissionForRUDOps
 )
 
 from .GraphResolvers import (
@@ -749,7 +752,7 @@ class EventUpdateGQLModel:
     startdate: Optional[datetime.datetime] = None
     enddate: Optional[datetime.datetime] = None
     changedby: strawberry.Private[IDType] = None
-    # rbacobject: strawberry.Private[IDType] = None
+    rbacobject: strawberry.Private[IDType] = None
     
 @strawberry.type(description="""Result of event operation""")
 class EventResultGQLModel:
@@ -777,7 +780,7 @@ async def event_insert(self, info: strawberry.types.Info, event: EventInsertGQLM
     permission_classes=[
         OnlyForAuthentized,
         # OnlyForAdmins
-        RoleBasedPermission("administrátor")
+        RoleBasedPermissionForRUDOps(roles="administrátor", GQLModel=EventGQLModel)
     ])
 async def event_update(self, info: strawberry.types.Info, event: EventUpdateGQLModel) -> EventResultGQLModel:   
     return await encapsulateUpdate(info, EventGQLModel.getLoader(info), event, EventResultGQLModel(id=None, msg="ok"))

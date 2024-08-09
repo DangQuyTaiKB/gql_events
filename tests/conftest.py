@@ -5,6 +5,7 @@ import pytest
 import logging
 import fastapi
 import uvicorn
+import time
 from pydantic import BaseModel
 from uuid import uuid1 as uuid
 import random
@@ -321,6 +322,7 @@ def runServer(port, response):
     _api_process.start()
     print(f"Server started at {port}")
     logging.info(f"Server started at {port}")
+
     yield _api_process
     _api_process.terminate()
     _api_process.join()
@@ -378,6 +380,7 @@ def runOauth(port):
     
     _api_process = Process(target=runOAuthServer, daemon=True, kwargs={"port": port})
     _api_process.start()
+    time.sleep(2)
     print(f"OAuthServer started at {port}")
     logging.info(f"OAuthServer started at {port}")
     yield _api_process
