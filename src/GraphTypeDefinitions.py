@@ -749,7 +749,7 @@ class EventUpdateGQLModel:
     startdate: Optional[datetime.datetime] = None
     enddate: Optional[datetime.datetime] = None
     changedby: strawberry.Private[IDType] = None
-    rbacobject: strawberry.Private[IDType] = None
+    # rbacobject: strawberry.Private[IDType] = None
     
 @strawberry.type(description="""Result of event operation""")
 class EventResultGQLModel:
