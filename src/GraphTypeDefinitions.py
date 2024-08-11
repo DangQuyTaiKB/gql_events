@@ -737,7 +737,8 @@ class EventInsertGQLModel:
     enddate: Optional[datetime.datetime] = \
         strawberry.field(description="end date of event", default_factory=lambda:(datetime.datetime.now() + datetime.timedelta(minutes = 30)) )
     createdby: strawberry.Private[IDType] = None
-    rbacobject: strawberry.Private[IDType] = None
+    rbacobject: Optional[IDType] = \
+        strawberry.field(description="group_id or user_id defines access rights", default=None)
 
 
 @strawberry.input(description="Datastructure for update")
@@ -808,6 +809,7 @@ class PresenceInsertGQLModel:
     createdby: strawberry.Private[IDType] = None
     rbacobject: strawberry.Private[IDType] = None
 
+
 @strawberry.input(description="Datastructure for update")
 class PresenceUpdateGQLModel:
     id: IDType
@@ -863,7 +865,9 @@ class EventTypeInsertGQLModel:
     name_en: Optional[str] = strawberry.field(description="english name of event type", default=None)
     id: Optional[IDType] = None
     createdby: strawberry.Private[IDType] = None
-    rbacobject: strawberry.Private[IDType] = None
+    rbacobject: Optional[IDType] = \
+        strawberry.field(description="group_id or user_id defines access rights", default=None)
+
 
 @strawberry.input(description="Datastructure for event type update")
 class EventTypeUpdateGQLModel:
@@ -891,7 +895,7 @@ class EventTypeResultGQLModel:
         OnlyForAdmins
     ])
 async def event_type_insert(self, info: strawberry.types.Info, event_type: EventTypeInsertGQLModel) -> EventTypeResultGQLModel:
-    return await encapsulateInsert(info, PresenceGQLModel.getLoader(info), event_type, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateInsert(info, EventTypeGQLModel.getLoader(info), event_type, EventTypeResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(
     description="updates the event",
@@ -900,7 +904,7 @@ async def event_type_insert(self, info: strawberry.types.Info, event_type: Event
         OnlyForAdmins
     ])
 async def event_type_update(self, info: strawberry.types.Info, event_type: EventTypeUpdateGQLModel) -> EventTypeResultGQLModel:
-    return await encapsulateUpdate(info, PresenceGQLModel.getLoader(info), event_type, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateUpdate(info, EventTypeGQLModel.getLoader(info), event_type, EventTypeResultGQLModel(id=None, msg="ok"))
 
 @strawberry.mutation(
     description="updates the event",
@@ -909,7 +913,7 @@ async def event_type_update(self, info: strawberry.types.Info, event_type: Event
         OnlyForAdmins
     ])
 async def event_type_delete(self, info: strawberry.types.Info, id: IDType) -> EventTypeResultGQLModel:
-    return await encapsulateDelete(info, PresenceGQLModel.getLoader(info), id, EventTypeResultGQLModel(id=None, msg="ok"))
+    return await encapsulateDelete(info, EventTypeGQLModel.getLoader(info), id, EventTypeResultGQLModel(id=None, msg="ok"))
 
 # endregion
 
@@ -977,7 +981,9 @@ class InvitationTypeInsertGQLModel:
     name_en: Optional[str] = None
     id: Optional[IDType] = None
     createdby: strawberry.Private[IDType] = None
-    rbacobject: strawberry.Private[IDType] = None
+    rbacobject: Optional[IDType] = \
+        strawberry.field(description="group_id or user_id defines access rights", default=None)
+
 
 @strawberry.input(description="Datastructure for invitation type update")
 class InvitationTypeUpdateGQLModel:
