@@ -638,6 +638,11 @@ async def presence_by_id(self, info: strawberry.types.Info, id: IDType) -> Optio
 # endregion
 
 # region Event Model
+@createInputs
+@dataclass
+class EventGroupInputFilter:
+    group_id: IDType
+   
 
 @createInputs
 @dataclass
@@ -652,6 +657,8 @@ class EventInputFilter:
     enddate: datetime.datetime
     type: EventTypeInputFilter
     presences: PresenceInputFilter
+    groups: EventGroupInputFilter
+    place_id: IDType
     
 
 # @strawberry.field(

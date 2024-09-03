@@ -66,6 +66,8 @@ class EventModel(BaseModel):
     sub_events = relationship("EventModel", viewonly=True, uselist=True)
     master_event = relationship("EventModel", viewonly=True, uselist=False)
 
+    groups = relationship("EventGroupModel", viewonly=True, uselist=True)
+
 class EventTypeModel(BaseModel):
     __tablename__ = "eventtypes"
 

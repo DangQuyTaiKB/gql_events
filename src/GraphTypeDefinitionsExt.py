@@ -17,6 +17,13 @@ from .GraphResolvers import (
     create_statement_for_group_events2
     )
 
+
+# @createInputs
+# @dataclasses.dataclass
+# class EventGroupInputFilter:
+#     group_id: IDType
+
+
 @createInputs
 @dataclasses.dataclass
 class UGEventInputFilter:
@@ -31,6 +38,10 @@ class UGEventInputFilter:
     enddate: datetime.datetime
     masterevent_id: IDType
     eventtype_id: IDType
+    from .GraphTypeDefinitions import EventGroupInputFilter
+    groups: EventGroupInputFilter
+    from .GraphTypeDefinitions import PresenceInputFilter
+    presences: PresenceInputFilter
 
     # from .GraphTypeDefinitions import EventTypeWhereFilter
     # eventtype: EventTypeWhereFilter
